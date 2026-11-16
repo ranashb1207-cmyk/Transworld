@@ -1,2 +1,6 @@
 psycopg2-binary
 bcrypt
+streamlit
+flask
+psycopg2-binary
+pandas
