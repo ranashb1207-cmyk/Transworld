@@ -1,0 +1,3411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Transworld GIS & NOC Portal</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:"Segoe UI",Roboto,Arial,sans-serif;font-size:13px;background:#1b1f24;color:#e6e9ee;overflow:hidden}
+:root{--blue:#2b8be6;--btn:#2196f3;--hd:#22272d;--bg:#1b1f24}
+
+/* LOGIN SCREEN (EXACT VIDEO MATCH) */
+#login{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#13286a,#070d33 60%,#040821)}
+#net{position:absolute;inset:0;width:100%;height:100%}
+.world-map-bg{position:absolute;inset:0;opacity:0.25;background-image:radial-gradient(#a3c2f0 1px, transparent 1px);background-size:24px 24px;pointer-events:none}
+.lb{position:relative;color:#fff;width:380px;max-width:94vw;background:rgba(14,20,38,0.85);padding:22px 20px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);backdrop-filter:blur(10px);box-shadow:0 12px 40px rgba(0,0,0,0.75)}
+.login-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#0d1117;padding:3px;border-radius:6px;margin-bottom:16px;border:1px solid #30363d}
+.ltab{padding:7px 10px;text-align:center;font-size:12px;font-weight:700;color:#8b949e;border-radius:4px;cursor:pointer;border:none;background:transparent;transition:all 0.2s}
+.ltab.active{background:#1f6feb;color:#fff;box-shadow:0 2px 8px rgba(31,111,235,0.4)}
+.ltab.active.member{background:#10b981;box-shadow:0 2px 8px rgba(16,185,129,0.4)}
+.login-subhead{font-size:11px;color:#8fa5c4;text-align:center;margin:-6px 0 14px 0;line-height:1.4}
+.lb .r{display:flex;align-items:center;margin:9px 0;font-size:12px}
+.lb .r span{width:76px;color:#cdd7e5;font-weight:600}
+.lb input, .lb select{flex:1;min-width:0;padding:6px 8px;border:1px solid #758aa3;border-radius:3px;background:#e8f0fe;color:#111;font-size:12px;outline:none}
+.lb input:focus, .lb select:focus{border-color:#2b8be6;background:#fff}
+.btn-login-act{display:block;margin:14px auto 0;width:100%;padding:8px;border:0;border-radius:4px;color:#fff;font-weight:700;font-size:13px;cursor:pointer;transition:background 0.2s}
+.btn-login-act:hover{opacity:0.9}
+#lerr{text-align:center;color:#ff8a8a;min-height:16px;margin-top:8px;font-size:12px}
+.demo-accounts{margin-top:14px;border-top:1px solid rgba(255,255,255,0.1);padding-top:10px;font-size:11px;color:#8fa5c4;text-align:center}
+.demo-btn{background:rgba(43,139,230,0.18);border:1px solid rgba(43,139,230,0.4);color:#a8d1ff;padding:3px 8px;border-radius:3px;cursor:pointer;margin:2px;font-size:10.5px;display:inline-block}
+.demo-btn:hover{background:#2b8be6;color:#fff}
+.demo-btn.member-btn{background:rgba(16,185,129,0.18);border-color:rgba(16,185,129,0.4);color:#a7f3d0}
+.demo-btn.member-btn:hover{background:#10b981;color:#fff}
+
+/* LOADING SCREEN (VIDEO 00:40) */
+#loader-overlay{position:fixed;inset:0;z-index:9500;background:rgba(27,31,36,0.95);display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.spinner{width:42px;height:42px;border:3px solid rgba(46,204,64,0.2);border-top-color:#2ecc40;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-text{font-size:14px;color:#fff;font-weight:600;letter-spacing:0.5px}
+
+/* MAIN APP WRAPPER */
+#app{display:none;height:100%;flex-direction:column}
+header{height:48px;flex:none;background:var(--hd);display:flex;align-items:center;gap:12px;padding:0 14px;border-bottom:1px solid #111;z-index:2000}
+#hb{color:var(--blue);font-size:20px;cursor:pointer;margin-right:4px}
+.brand{font-size:18px;font-weight:700;color:var(--blue);margin-right:26px;letter-spacing:0.5px}
+#q{width:170px;padding:6px 10px;background:#2c3238;border:0;color:#fff;border-radius:3px;font-size:12.5px;outline:none}
+#q::placeholder{color:#8a949e}
+.b{background:var(--btn);color:#fff;border:0;border-radius:3px;padding:6px 13px;cursor:pointer;font-size:12.5px;font-weight:600;transition:opacity 0.15s}
+.b:hover{opacity:0.9}
+.sp{flex:1}
+#cs{position:relative;color:var(--blue);font-weight:600;font-size:14.5px;cursor:pointer;margin-right:18px;user-select:none}
+#ddl{display:none;position:absolute;right:-20px;top:32px;width:150px;background:#2c3239;padding:10px;border-radius:2px;box-shadow:0 6px 18px rgba(0,0,0,0.5);z-index:3000;font-size:12px;cursor:default}
+#ddl.open{display:block}
+#ddl label{display:flex;align-items:center;gap:8px;margin:7px 0;color:var(--blue);font-weight:600;cursor:pointer}
+#ddl input{accent-color:var(--blue);cursor:pointer}
+#ld{color:#e53935;font-weight:700;font-style:italic;display:none;margin-top:6px;font-size:11.5px}
+
+/* LIVE SPEED BADGE IN HEADER */
+.live-speed-ticker{display:flex;align-items:center;gap:10px;background:rgba(0,0,0,0.3);padding:4px 12px;border-radius:4px;border:1px solid #333d47;margin-right:12px}
+.ticker-dot{width:7px;height:7px;border-radius:50%;background:#3ddc3d;box-shadow:0 0 6px #3ddc3d;animation:pulse 1.4s infinite}
+@keyframes pulse{0%{opacity:0.6}50%{opacity:1}100%{opacity:0.6}}
+.ticker-val{font-family:Consolas,monospace;font-size:12px;color:#fff;font-weight:700}
+.ticker-val span{color:var(--blue);font-weight:400}
+
+/* LAYOUT BODY */
+main{flex:1;display:flex;min-height:0}
+aside{width:215px;flex:none;background:var(--bg);overflow-y:auto;padding:18px 12px 40px;position:relative;border-right:1px solid #111;user-select:none}
+aside.min{display:none}
+aside h4{margin:0 0 12px 0;font-size:10.5px;letter-spacing:.7px;color:#c9d1d9;font-weight:600}
+.nd .rw{display:flex;align-items:center;gap:6px;padding:7px 2px;color:var(--blue);font-weight:600;font-size:12.5px}
+.nd .ar{width:12px;cursor:pointer;font-size:10px;color:var(--blue)}
+.eye{cursor:pointer;display:flex;align-items:center}.eye.off{opacity:.35}
+.lab{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tg,.zm{cursor:pointer;margin-left:auto;color:var(--blue);font-weight:400;font-size:12px}
+.ch{margin-left:14px}
+.hide{display:none}
+.sep{border-top:1px solid #2c3238;margin:10px 0 20px}
+.bg{display:flex;justify-content:space-between;color:var(--blue);padding:8px 4px;cursor:pointer;font-size:13px;font-weight:600}
+.bo{padding:6px 18px;color:#7fb4ea;cursor:pointer;font-size:12px}.bo:hover{color:#fff}.bo.on{color:#fff;font-weight:700}
+.ver{position:absolute;left:0;right:0;bottom:12px;text-align:center;font-size:10px;color:#6d7782}
+
+/* MAP WRAPPER */
+#mw{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+#mp{flex:1;position:relative;min-height:0}
+#map{position:absolute;inset:0;background:#181b1f}
+
+/* FLOATING CONTROLS */
+.mc,.rc{position:absolute;z-index:1000;display:flex;flex-direction:column;gap:3px}
+.mc{left:14px;top:14px}.rc{right:12px;top:14px}
+.mc button,.rc button{width:34px;height:34px;background:#23282e;border:0;color:var(--blue);font-size:18px;cursor:pointer;border-radius:3px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.5);transition:background 0.15s}
+.mc button:hover,.rc button:hover{background:#2e353d;color:#fff}
+#ll{position:absolute;z-index:1000;left:50%;top:12px;transform:translateX(-50%);display:none;background:rgba(35,40,46,.94);padding:6px 12px;border-radius:4px;color:#ccc;width:250px;border:1px solid #444}
+#ll input{background:transparent;border:0;color:#fff;width:205px;outline:0;font-size:12px}
+#cd{position:absolute;right:0;bottom:16px;z-index:1000;background:rgba(15,70,120,.82);color:#cfe8ff;font-size:10.5px;padding:3px 9px;font-family:Consolas,monospace}
+#pe{position:absolute;right:6px;bottom:1px;z-index:1000;font-size:10px;color:#ddd;text-shadow:0 0 2px #000}
+
+/* BOTTOM ALARM / STATUS BAR (VIDEO 00:42 - 01:05) */
+#pn{flex:none;background:#1b1f24;border-top:1px solid #111;user-select:none}
+#tab{display:inline-block;background:#2d9cdb;color:#fff;padding:6px 16px;font-size:12.5px;margin-left:2px;font-weight:600}
+table.st{width:calc(100% - 4px);margin:0 2px;border-collapse:collapse}
+.st th{background:#02608f;color:#fff;padding:10px 6px;border:1px solid #37474f;text-align:center;font-weight:600;font-size:12px}
+.st td{padding:10px 6px;border:1px solid #37474f;text-align:center;color:#fff;font-size:12px}
+.dt{display:inline-block;width:7px;height:7px;border-radius:50%;margin:0 4px 1px}
+.no-alarms{padding:12px;text-align:center;background:#212529;color:#c9d1d9}
+.no-alarms b{display:block;font-size:13px;color:#fff;margin-bottom:3px}
+
+/* CUSTOMER ONT POPUP (VIDEO 01:17 - 01:27) */
+.dk .leaflet-popup-content-wrapper{background:#212529;color:#5b9bd5;border-radius:3px;padding:0;box-shadow:0 4px 16px rgba(0,0,0,.7);border:1px solid #333b42}
+.dk .leaflet-popup-content{margin:0;width:340px!important}
+.dk .leaflet-popup-tip{background:#212529}
+.pt{display:flex;align-items:center;padding:12px 14px 8px;font-size:15px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.pt b{font-weight:600;flex:1;color:#fff}
+.pt i{font-style:normal;cursor:pointer;margin-left:12px;color:#7fb4ea;font-size:14px}
+.pt i:hover{color:#fff}
+.up{color:#3ddc3d;font-weight:700}.dn{color:#ff5252;font-weight:700}
+.fl{padding:6px 14px 8px;font-size:13px;font-weight:600}
+.sc{margin:4px 10px 0 14px;max-height:220px;overflow-y:auto;background:#212529}
+.sc table{width:100%;border-collapse:collapse}
+.sc tr:nth-child(odd){background:#292f35}
+.sc td{padding:7px 10px;font-size:12px;vertical-align:middle;color:#c9d1d9}
+.sc td:first-child{color:#8b949e;width:42%}
+.sc td:last-child{text-align:left;color:#fff;font-family:Consolas,monospace}
+.rx{display:inline-block;background:#2e7d32;color:#fff;border-radius:12px;padding:2px 12px;font-weight:700;font-size:11px}
+.rx.w{background:#ef6c00}.rx.x{background:#c62828}
+.zt{padding:10px 14px;font-size:12px;cursor:pointer;color:var(--blue);font-weight:600;border-top:1px solid rgba(255,255,255,0.06)}
+.zt:hover{color:#fff}
+.pp.col .sc,.pp.col .fl{display:none}
+
+/* LIVE BACKEND SPEED METER ROW IN POPUP (AUDIO REQUIREMENT) */
+.live-speed-box{background:rgba(43,139,230,0.12);border:1px solid rgba(43,139,230,0.3);margin:6px 14px 10px;padding:8px 10px;border-radius:4px}
+.live-speed-header{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:#85c2ff;margin-bottom:4px}
+.live-speed-readout{display:flex;gap:14px;font-family:Consolas,monospace;font-size:12.5px;color:#fff}
+.live-speed-readout b{font-weight:700}
+.live-bar-track{height:5px;background:#181d23;border-radius:3px;overflow:hidden;margin-top:6px}
+.live-bar-fill{height:100%;background:linear-gradient(90deg,#2196f3,#00e5ff);border-radius:3px;transition:width 0.4s}
+
+/* MARKERS & ICONS */
+.pin{width:22px;height:22px;background:#0b2a6b;border:2px solid #fff;border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:0 1px 4px #000}
+.pin i{display:block;width:6px;height:6px;background:#fff;border-radius:50%;margin:6px}
+.sq{width:9px;height:9px;background:#00bcd4;border:1px solid #fff}.dm{width:10px;height:10px;background:#ff9800;border:1px solid #fff;transform:rotate(45deg)}
+.jt{width:8px;height:8px;background:#fff;border:2px solid #e53935;border-radius:50%}.mh{width:8px;height:8px;background:#9e9e9e;border:1px solid #fff}
+
+/* PARCEL LABELS FOR COMMERCIAL VIEW (VIDEO 02:37) */
+.parcel-label{font-size:9px;font-family:Consolas,monospace;color:#0b3d0b;font-weight:700;text-align:center;pointer-events:none}
+
+/* =========================================================================
+   ROLE-BASED TASK MANAGEMENT & FIELD DISPATCH SYSTEM STYLES
+   ========================================================================= */
+#dispatch-drawer{position:fixed;right:-580px;top:48px;bottom:0;width:560px;max-width:96vw;background:#161b22;border-left:1px solid #30363d;z-index:4500;display:flex;flex-direction:column;transition:right 0.3s cubic-bezier(0.16, 1, 0.3, 1);box-shadow:-8px 0 36px rgba(0,0,0,0.75);font-family:'Segoe UI',Roboto,sans-serif}
+#dispatch-drawer.open{right:0}
+.dd-header{padding:14px 18px;background:#0d1117;border-bottom:1px solid #30363d;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.dd-title{font-size:14px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px}
+.dd-close{background:none;border:none;color:#8b949e;font-size:20px;cursor:pointer;line-height:1;padding:2px 6px;border-radius:4px;transition:0.15s}
+.dd-close:hover{color:#fff;background:#21262d}
+
+.role-bar{padding:10px 18px;background:#1a202c;border-bottom:1px solid #30363d;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
+.role-badge{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600}
+.role-badge .avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff}
+.role-switcher{display:flex;align-items:center;gap:6px}
+.role-switcher select{background:#0d1117;color:#f0f6fc;border:1px solid #30363d;border-radius:4px;padding:4px 8px;font-size:12px;outline:none;cursor:pointer}
+.role-switcher select:focus{border-color:#2f81f7}
+
+.dd-nav{display:flex;background:#0d1117;border-bottom:1px solid #30363d;flex-shrink:0}
+.dd-tab{flex:1;padding:10px 14px;background:transparent;border:none;border-bottom:2px solid transparent;color:#8b949e;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:0.15s}
+.dd-tab:hover{color:#f0f6fc;background:#161b22}
+.dd-tab.active{color:#58a6ff;border-bottom-color:#1f6feb;background:#161b22}
+.dd-tab .tab-count{font-size:10px;padding:1px 6px;border-radius:10px;background:#21262d;color:#8b949e}
+.dd-tab.active .tab-count{background:rgba(31,111,235,0.25);color:#58a6ff}
+
+.dd-body{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:14px}
+.dd-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dd-filters select{background:#0d1117;color:#c9d1d9;border:1px solid #30363d;border-radius:4px;padding:5px 8px;font-size:11.5px;outline:none}
+
+.task-list{display:flex;flex-direction:column;gap:10px}
+.task-card{background:#0d1117;border:1px solid #30363d;border-left:4px solid #3b82f6;border-radius:6px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;transition:0.15s}
+.task-card:hover{border-color:#484f58;box-shadow:0 4px 14px rgba(0,0,0,0.4)}
+.task-card.cat-survey{border-left-color:#3b82f6}
+.task-card.cat-boq{border-left-color:#f59e0b}
+.task-card.cat-plan{border-left-color:#8b5cf6}
+.task-card.cat-db{border-left-color:#06b6d4}
+
+.tc-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tc-code{font-family:Consolas,monospace;font-size:11px;font-weight:700;color:#79c0ff}
+.tc-badges{display:flex;align-items:center;gap:6px}
+.badge-type{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:700;text-transform:uppercase}
+.badge-type.survey{background:rgba(59,130,246,0.18);color:#60a5fa;border:1px solid rgba(59,130,246,0.3)}
+.badge-type.boq{background:rgba(245,158,11,0.18);color:#fbbf24;border:1px solid rgba(245,158,11,0.3)}
+.badge-type.plan{background:rgba(139,92,246,0.18);color:#c084fc;border:1px solid rgba(139,92,246,0.3)}
+.badge-type.db{background:rgba(6,182,212,0.18);color:#22d3ee;border:1px solid rgba(6,182,212,0.3)}
+
+.badge-priority{font-size:10px;padding:2px 6px;border-radius:4px;font-weight:700}
+.badge-priority.critical{background:rgba(248,81,73,0.2);color:#f85149;border:1px solid rgba(248,81,73,0.35)}
+.badge-priority.high{background:rgba(245,158,11,0.2);color:#fbbf24;border:1px solid rgba(245,158,11,0.35)}
+.badge-priority.medium{background:rgba(43,139,230,0.2);color:#79c0ff;border:1px solid rgba(43,139,230,0.35)}
+.badge-priority.low{background:rgba(110,118,129,0.2);color:#8b949e;border:1px solid rgba(110,118,129,0.35)}
+
+.badge-status{font-size:10.5px;padding:3px 8px;border-radius:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px}
+.badge-status.pending{background:rgba(245,158,11,0.18);color:#fbbf24}
+.badge-status.progress{background:rgba(31,111,235,0.2);color:#58a6ff}
+.badge-status.submitted{background:rgba(168,85,247,0.2);color:#c084fc;animation:pulseReview 1.5s infinite}
+.badge-status.accepted{background:rgba(46,204,64,0.2);color:#3ddc3d}
+.badge-status.rejected{background:rgba(248,81,73,0.2);color:#f85149}
+
+@keyframes pulseReview{0%{box-shadow:0 0 0 0 rgba(168,85,247,0.4)}70%{box-shadow:0 0 0 6px rgba(168,85,247,0)}100%{box-shadow:0 0 0 0 rgba(168,85,247,0)}}
+
+.tc-title{font-size:13px;font-weight:700;color:#f0f6fc;line-height:1.3}
+.tc-desc{font-size:11.5px;color:#8b949e;line-height:1.4}
+.tc-meta{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:11px;color:#8b949e;padding-top:6px;border-top:1px solid rgba(48,54,61,0.6)}
+.tc-assignee{display:flex;align-items:center;gap:6px;color:#c9d1d9}
+.tc-deadline{display:flex;align-items:center;gap:4px;font-family:Consolas,monospace;font-weight:600}
+.tc-deadline.overdue{color:#f85149}
+.tc-deadline.soon{color:#fbbf24}
+
+.tc-actions{display:flex;align-items:center;gap:6px;margin-top:4px}
+.btn-action{padding:5px 10px;border-radius:4px;border:none;font-size:11px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:0.15s}
+.btn-action.start{background:#1f6feb;color:#fff}
+.btn-action.start:hover{background:#388bfd}
+.btn-action.submit{background:#8b5cf6;color:#fff}
+.btn-action.submit:hover{background:#a78bfa}
+.btn-action.review{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-weight:700;box-shadow:0 0 8px rgba(245,158,11,0.4)}
+.btn-action.review:hover{filter:brightness(1.1)}
+.btn-action.view-map{background:#21262d;color:#c9d1d9;border:1px solid #30363d}
+.btn-action.view-map:hover{background:#30363d;color:#fff}
+
+/* TEAM DIRECTORY STYLES (NORTH 25, SOUTH 10, CENTRAL 12) */
+.team-region-box{background:#0d1117;border:1px solid #30363d;border-radius:6px;overflow:hidden;margin-bottom:12px}
+.tr-header{padding:10px 14px;background:#1a202c;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:12.5px;color:#f0f6fc;transition:background 0.15s}
+.tr-header:hover{background:#222a38}
+.tr-members-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px}
+.member-card{background:#161b22;border:1px solid #30363d;border-radius:5px;padding:8px 10px;display:flex;align-items:center;gap:8px}
+.member-info{flex:1;min-width:0}
+.member-name{font-size:12px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.member-role{font-size:10.5px;color:#8b949e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.member-email{font-size:10px;font-family:Consolas,monospace;color:#58a6ff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(4px);z-index:6000;display:none;align-items:center;justify-content:center}
+.modal-box{background:#161b22;border:1px solid #30363d;border-radius:8px;width:520px;max-width:94vw;box-shadow:0 12px 40px rgba(0,0,0,0.85);display:flex;flex-direction:column;overflow:hidden}
+.modal-header{padding:14px 18px;background:#0d1117;border-bottom:1px solid #30363d;display:flex;align-items:center;justify-content:space-between}
+.modal-header h3{font-size:14px;font-weight:700;color:#fff;margin:0}
+.modal-body{padding:16px 18px;display:flex;flex-direction:column;gap:12px;max-height:75vh;overflow-y:auto}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-group label{font-size:11.5px;font-weight:600;color:#c9d1d9}
+.form-group input, .form-group select, .form-group textarea{background:#0d1117;border:1px solid #30363d;border-radius:4px;padding:7px 10px;color:#fff;font-size:12px;outline:none}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus{border-color:#2f81f7}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-footer{padding:12px 18px;background:#0d1117;border-top:1px solid #30363d;display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.btn-sec{padding:6px 12px;background:#21262d;border:1px solid #30363d;color:#c9d1d9;border-radius:4px;font-size:12px;cursor:pointer}
+.btn-pri{padding:6px 14px;background:#1f6feb;border:none;color:#fff;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer}
+.btn-pri:hover{background:#388bfd}
+.btn-danger{padding:6px 14px;background:#da3633;border:none;color:#fff;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer}
+.btn-danger:hover{background:#f85149}
+.btn-success{padding:6px 14px;background:#238636;border:none;color:#fff;border-radius:4px;font-size:12px;font-weight:700;cursor:pointer}
+.btn-success:hover{background:#2ea043}
+
+/* TASK MAP PIN ICONS */
+.task-map-pin{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid #fff;box-shadow:0 0 10px rgba(0,0,0,0.8);cursor:pointer;transition:transform 0.2s}
+.task-map-pin:hover{transform:scale(1.25)}
+.task-map-pin.pending{background:#f59e0b}
+.task-map-pin.progress{background:#1f6feb}
+.task-map-pin.submitted{background:#8b5cf6;animation:pinPulse 1.4s infinite}
+.task-map-pin.accepted{background:#2ecc40}
+@keyframes pinPulse{0%{box-shadow:0 0 0 0 rgba(139,92,246,0.6)}70%{box-shadow:0 0 0 8px rgba(139,92,246,0)}100%{box-shadow:0 0 0 0 rgba(139,92,246,0)}}
+
+/* DEDICATED FULL-PAGE FIELD TASKS INTERFACE (MATCHING EXACT ENTERPRISE SCREENSHOT) */
+#field-tasks-view{position:fixed;inset:0;z-index:4900;background:#080c14;display:none;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#c9d1d9;box-sizing:border-box}
+#field-tasks-view.active{display:flex}
+.ft-sidebar{width:225px;flex:none;background:#090e17;border-right:1px solid #1c2636;display:flex;flex-direction:column;padding:0;user-select:none}
+.ft-brand{padding:24px 22px 18px 22px}
+.ft-brand-title{font-size:16px;font-weight:700;color:#ffffff;letter-spacing:-0.2px}
+.ft-brand-sub{font-size:11px;color:#8b949e;margin-top:3px}
+.ft-nav{display:flex;flex-direction:column;gap:2px;margin-top:8px}
+.ft-nav-item{padding:9px 20px;font-size:13px;font-weight:500;color:#8b949e;cursor:pointer;display:flex;align-items:center;transition:all 0.15s ease}
+.ft-nav-item:hover{color:#ffffff;background:rgba(255,255,255,0.03)}
+.ft-nav-item.active{background:#121c2e;color:#ffffff;font-weight:600;border-left:3px solid #1f6feb;padding-left:17px}
+.ft-main{flex:1;display:flex;flex-direction:column;background:#080c14;overflow-y:auto;padding:24px 32px 32px 32px;min-width:0}
+.ft-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.ft-page-title{font-size:22px;font-weight:700;color:#ffffff;margin:0}
+.ft-page-sub{font-size:13px;color:#8b949e;margin-top:4px}
+.ft-btn-assign{background:#1f6feb;color:#ffffff;font-weight:600;font-size:13px;padding:8px 18px;border-radius:6px;border:none;cursor:pointer;transition:background 0.15s ease}
+.ft-btn-assign:hover{background:#388bfd}
+.ft-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.ft-kpi-card{background:#0f1523;border:1px solid #1c2636;border-radius:8px;padding:16px 20px;transition:border-color 0.2s}
+.ft-kpi-card.highlight{border-color:#d29922}
+.ft-kpi-label{font-size:12.5px;color:#8b949e;font-weight:500}
+.ft-kpi-card.highlight .ft-kpi-label{color:#d29922}
+.ft-kpi-val{font-size:26px;font-weight:700;color:#ffffff;margin-top:6px;line-height:1}
+.ft-kpi-card.highlight .ft-kpi-val{color:#d29922}
+.ft-filters-row{display:flex;gap:10px;margin-bottom:16px}
+.ft-select{background:#0f1523;border:1px solid #1c2636;color:#c9d1d9;border-radius:6px;padding:7px 14px;font-size:12.5px;font-weight:500;cursor:pointer;outline:none}
+.ft-select:focus{border-color:#1f6feb}
+.ft-split-view{display:flex;gap:20px;align-items:flex-start;flex:1;min-height:0}
+.ft-table-card{flex:1.5;min-width:0;background:#0f1523;border:1px solid #1c2636;border-radius:8px;overflow:hidden;overflow-x:auto}
+.ft-table{width:100%;border-collapse:collapse;text-align:left;min-width:580px}
+.ft-table th{padding:12px 14px;font-size:11.5px;color:#8b949e;font-weight:600;border-bottom:1px solid #1c2636;user-select:none}
+.ft-table td{padding:12px 14px;font-size:12.5px;color:#c9d1d9;border-bottom:1px solid #151d2c;vertical-align:middle}
+.ft-table tr{cursor:pointer;transition:background 0.15s ease}
+.ft-table tr:hover{background:#141c2c}
+.ft-table tr.selected{background:#172338;box-shadow:inset 3px 0 0 #1f6feb}
+.ft-review-card{width:380px;min-width:360px;background:#0f1523;border:1px solid #1c2636;border-radius:8px;padding:22px;box-sizing:border-box}
+
+/* DEDICATED FULL-PAGE TEAM MEMBER MY TASKS INTERFACE (MATCHING EXACT SCREENSHOT FOR ALL MEMBERS) */
+#member-tasks-view{position:fixed;inset:0;z-index:4900;background:#080c14;display:none;flex-direction:column;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:#c9d1d9;box-sizing:border-box}
+#member-tasks-view.active{display:flex}
+.mt-topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 36px;border-bottom:1px solid #1c2636;background:#090e17;user-select:none;flex-shrink:0}
+.mt-brand{font-size:16px;font-weight:700;color:#ffffff;letter-spacing:-0.2px}
+.mt-top-nav{display:flex;align-items:center;gap:22px}
+.mt-nav-link{font-size:13px;color:#8b949e;cursor:pointer;transition:color 0.15s}
+.mt-nav-link:hover{color:#ffffff}
+.mt-nav-link.active{color:#ffffff;font-weight:600}
+.mt-user-info{font-size:13px;color:#8b949e;margin-left:8px;font-family:Consolas,monospace}
+.mt-main{flex:1;display:flex;flex-direction:column;background:#080c14;overflow-y:auto;padding:24px 36px 36px 36px}
+.mt-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.mt-title{font-size:22px;font-weight:700;color:#ffffff;margin:0}
+.mt-kpi-pills{display:flex;gap:10px}
+.mt-pill{background:#0f1523;border:1px solid #1c2636;color:#c9d1d9;padding:6px 16px;border-radius:6px;font-size:12.5px;font-weight:500;cursor:pointer;transition:all 0.15s ease}
+.mt-pill:hover{border-color:#30363d;color:#ffffff}
+.mt-pill.overdue{border-color:#da3633}
+.mt-pill.overdue span{color:#f85149;font-weight:700}
+.mt-split{display:flex;gap:24px;align-items:flex-start;flex:1}
+.mt-left-col{width:360px;min-width:340px;background:#0f1523;border:1px solid #1c2636;border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.mt-tabs{display:flex;border-bottom:1px solid #1c2636;background:#0b1019}
+.mt-tab{flex:1;text-align:center;padding:12px 6px;font-size:12px;font-weight:500;color:#8b949e;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s}
+.mt-tab:hover{color:#c9d1d9}
+.mt-tab.active{color:#ffffff;font-weight:600;border-bottom-color:#1f6feb;background:rgba(31,111,235,0.05)}
+.mt-cards-list{display:flex;flex-direction:column;max-height:calc(100vh - 230px);overflow-y:auto}
+.mt-task-card{padding:16px 18px;border-bottom:1px solid #151d2c;cursor:pointer;transition:background 0.15s}
+.mt-task-card:hover{background:#141c2c}
+.mt-task-card.selected{background:#162235;border-left:3px solid #1f6feb;padding-left:15px}
+.mt-tc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.mt-tc-code{font-family:Consolas,monospace;font-size:11px;color:#8b949e}
+.mt-tc-priority{font-size:11.5px;font-weight:600;color:#d29922}
+.mt-tc-title{font-size:13.5px;font-weight:600;color:#ffffff;margin-bottom:6px;line-height:1.35}
+.mt-tc-meta{font-size:12px;color:#8b949e}
+.mt-tc-placeholder{padding:16px 18px;border-bottom:1px solid #151d2c;opacity:0.35;font-family:Consolas,monospace;user-select:none}
+.mt-tc-placeholder .ph-code{font-size:11px;color:#8b949e;margin-bottom:6px}
+.mt-tc-placeholder .ph-title{font-size:13px;font-weight:700;color:#ffffff;margin-bottom:6px}
+.mt-tc-placeholder .ph-meta{font-size:11px;color:#8b949e}
+.mt-right-col{flex:1;background:#0f1523;border:1px solid #1c2636;border-radius:8px;padding:26px;min-width:0;box-sizing:border-box}
+.mt-detail-top{display:flex;justify-content:space-between;align-items:center}
+.mt-det-title{font-size:20px;font-weight:700;color:#ffffff;margin:10px 0 20px 0;line-height:1.3}
+.mt-meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding-bottom:20px;border-bottom:1px solid #1c2636;margin-bottom:20px}
+.mt-meta-lbl{font-size:11px;color:#8b949e;margin-bottom:4px}
+.mt-meta-val{font-size:13px;color:#ffffff;font-weight:600}
+.mt-section{margin-bottom:20px}
+.mt-section-lbl{font-size:11.5px;font-weight:600;color:#8b949e;margin-bottom:8px}
+.mt-instructions-text{font-size:13px;color:#ffffff;line-height:1.5;margin-bottom:14px}
+.mt-btn-view-map{background:#161f2e;border:1px solid #283548;color:#c9d1d9;font-size:12px;font-weight:500;padding:7px 16px;border-radius:5px;cursor:pointer;transition:all 0.15s}
+.mt-btn-view-map:hover{background:#1f2a3c;color:#ffffff}
+.mt-textarea{width:100%;min-height:85px;background:#080c13;border:1px solid #1c2636;border-radius:6px;color:#c9d1d9;padding:10px 12px;font-size:12.5px;resize:vertical;outline:none;box-sizing:border-box;margin-bottom:12px}
+.mt-textarea:focus{border-color:#1f6feb}
+.mt-dropzone{border:1px dashed #30363d;border-radius:6px;padding:14px;text-align:center;color:#8b949e;font-size:12px;cursor:pointer;background:rgba(255,255,255,0.01);margin-bottom:18px;transition:all 0.15s}
+.mt-dropzone:hover{border-color:#1f6feb;color:#c9d1d9;background:rgba(31,111,235,0.05)}
+.mt-actions-row{display:flex;gap:12px;align-items:center}
+.mt-btn-start{background:#1f6feb;color:#ffffff;font-size:13px;font-weight:600;padding:8px 20px;border-radius:6px;border:none;cursor:pointer;transition:background 0.15s}
+.mt-btn-start:hover{background:#388bfd}
+.mt-btn-submit{background:#161f2e;border:1px solid #30363d;color:#ffffff;font-size:13px;font-weight:600;padding:8px 20px;border-radius:6px;cursor:pointer;transition:all 0.15s}
+.mt-btn-submit:hover{background:#212c3d;border-color:#484f58}
+.mt-feedback-footer{font-size:11.5px;color:#8b949e;margin-top:16px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN (ROLE-BASED: ADMIN VS TEAM MEMBER) -->
+<div id="login">
+  <canvas id="net"></canvas>
+  <div class="world-map-bg"></div>
+  <div class="lb">
+    <!-- TWO ROLE OPTIONS: ADMIN VS TEAM MEMBER -->
+    <div class="login-tabs">
+      <button class="ltab active" id="btn-tab-admin" onclick="switchLoginRole('admin')">Admin Login</button>
+      <button class="ltab" id="btn-tab-member" onclick="switchLoginRole('member')">Team Member</button>
+    </div>
+
+    <!-- PANE 1: ADMIN LOGIN -->
+    <div id="pane-admin-login">
+      <h2 style="font-size:18px;margin:0 0 16px;text-align:center">Admin Portal</h2>
+      <div class="r"><span>Username</span><input id="admin-user" autocomplete="off" value="boss@transworld.com"></div>
+      <div class="r"><span>Password</span><input id="admin-pass" type="password"></div>
+      <button id="btn-login-admin" class="btn-login-act" style="background:#0a62d6;margin-top:18px">Login as Administrator</button>
+    </div>
+
+    <!-- PANE 2: TEAM MEMBER LOGIN -->
+    <div id="pane-member-login" style="display:none">
+      <h2 style="font-size:18px;margin:0 0 16px;text-align:center">Team Member Portal</h2>
+      <div class="r">
+        <span>Region</span>
+        <select id="login-member-region" onchange="onRegionChangeLogin()">
+          <option value="North">North Region</option>
+          <option value="Central">Central Region</option>
+          <option value="South">South Region</option>
+        </select>
+      </div>
+      <div class="r"><span>Email</span><input id="member-email" value="ali.north@transworld.com" placeholder="engineer@transworld.com" style="background:#161b22;color:#79c0ff;font-family:Consolas,monospace"></div>
+      <div class="r"><span>Password</span><input id="member-pass" type="password"></div>
+      <button id="btn-login-member" class="btn-login-act" style="background:#10b981;margin-top:18px">Login as Field Engineer</button>
+    </div>
+
+    <div id="lerr"></div>
+  </div>
+</div>
+
+<!-- DATA LOADING SPINNER (VIDEO 00:40) -->
+<div id="loader-overlay">
+  <div class="spinner"></div>
+  <div class="loader-text">Loading Data...</div>
+</div>
+
+<!-- MAIN DASHBOARD -->
+<div id="app">
+  <header>
+    <span id="hb">&#9776;</span>
+    <span class="brand">Transworld</span>
+    <input id="q" placeholder="Search Vehicle">
+    <button class="b" id="sb">Search</button>
+
+    <div class="sp"></div>
+
+    <!-- LIVE TELEMETRY TICKER (AUDIO REQUIREMENT) -->
+    <div class="live-speed-ticker cu">
+      <div class="ticker-dot"></div>
+      <div class="ticker-val">Total Bandwidth: <span id="hdr-total-speed">42.85 Gbps</span></div>
+    </div>
+
+    <!-- PGADMIN 4 DATABASE CONNECTION STATUS (HIDDEN AS REQUESTED) -->
+    <div style="display:none">
+      <div id="db-dot"></div>
+      <span id="db-status-val"></span>
+    </div>
+
+    <!-- LIVE SYNC DB BUTTON (ICON ONLY AS REQUESTED) -->
+    <button class="b cu" id="btn-sync-db" title="Sync Database" style="background:#1565c0;display:flex;align-items:center;justify-content:center;padding:0 8px;height:28px;min-width:32px;border-radius:4px">
+      <span id="sync-icon" style="font-size:16px;line-height:1;font-weight:700;display:inline-block;transition:transform 0.5s ease">&#8635;</span>
+    </button>
+
+    <!-- CUSTOMER STATUS DROPDOWN (VIDEO 00:43) -->
+    <div id="cs" class="cu">
+      Customer Status &#9662;
+      <div id="ddl">
+        <label><input type="checkbox" data-s="on" checked> Online</label>
+        <label><input type="checkbox" data-s="po" checked> Powered Off</label>
+        <label><input type="checkbox" data-s="ld" checked> Link Down</label>
+        <label><input type="checkbox" data-s="gem" checked> GEM Packet Loss</label>
+        <label><input type="checkbox" data-s="lo" checked> Low Optical Power</label>
+        <div id="ld">loading....</div>
+      </div>
+    </div>
+
+    <!-- FIELD DISPATCH & TASK MANAGEMENT BUTTON (COMPACT AS REQUESTED) -->
+    <button class="b" id="btn-toggle-dispatch" title="Field Dispatch & Task Management" style="background:linear-gradient(135deg,#1f6feb,#8b5cf6);display:flex;align-items:center;gap:4px;padding:4px 9px;font-size:11.5px;font-weight:600;box-shadow:0 0 6px rgba(139,92,246,0.3);border:none;margin-right:4px;border-radius:4px;height:28px">
+      <span id="btn-dispatch-label">Tasks</span>
+      <span id="badge-pending-tasks" style="background:#e11d48;color:#fff;font-size:9.5px;padding:1px 5px;border-radius:8px;font-weight:700;display:inline-block">0</span>
+    </button>
+
+    <!-- ACTIVE USER BADGE IN HEADER (ADMIN IN GREEN, NO BOSS TEXT) -->
+    <div id="hdr-user-pill" style="display:flex;align-items:center;background:#161b22;border:1px solid #30363d;padding:2px 8px;border-radius:12px;font-size:11px;margin-right:4px;height:24px">
+      <span id="hdr-user-avatar" style="font-size:11px;font-weight:700;background:#238636;color:#fff;padding:1px 8px;border-radius:3px;letter-spacing:0.3px">Admin</span>
+      <span id="hdr-user-name" style="display:none"></span>
+    </div>
+
+    <button class="b" id="lo" style="height:28px;padding:4px 10px;font-size:11.5px">&#10162; Logout</button>
+  </header>
+
+  <main>
+    <!-- LEFT SIDEBAR -->
+    <aside id="sd">
+      <h4>LAYER LIST</h4>
+      <div id="tr"></div>
+      <div class="sep"></div>
+
+      <h4 style="margin-top:20px">BASEMAP GALLERY</h4>
+      <div class="bg" id="bgh"><span>Basemap</span><span id="bga">&#8250;</span></div>
+      <div class="hide" id="bgl">
+        <div class="bo on" data-b="sat">Satellite</div>
+        <div class="bo" data-b="osm">OSM</div>
+      </div>
+
+      <div class="ver">Version 2.5</div>
+    </aside>
+
+    <!-- CENTER MAP AREA -->
+    <div id="mw">
+      <div id="mp">
+        <div id="map"></div>
+
+        <!-- FLOATING TEAM MEMBER WORKBENCH BANNER -->
+        <div id="member-workbench-banner" style="display:none;position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgba(22,27,34,0.92);border:1px solid #30363d;border-left:4px solid #10b981;padding:8px 16px;border-radius:6px;box-shadow:0 6px 24px rgba(0,0,0,0.7);z-index:1500;font-size:12px;color:#e6edf3;align-items:center;gap:10px;backdrop-filter:blur(6px)">
+          <span style="font-size:11px;font-weight:700;background:#10b981;color:#fff;padding:2px 6px;border-radius:3px;letter-spacing:0.5px">FIELD</span>
+          <span id="member-banner-text"><b>Field Workbench:</b> Welcome! You are logged in as Field Engineer.</span>
+          <button onclick="$('member-workbench-banner').style.display='none'" style="background:transparent;border:none;color:#8b949e;cursor:pointer;font-size:14px;padding:0 4px">&times;</button>
+        </div>
+
+        <!-- LEFT FLOATING MAP CONTROLS -->
+        <div class="mc">
+          <button id="zi" title="Zoom In">+</button>
+          <button id="zo" title="Zoom Out">&minus;</button>
+          <button id="cp" title="Reset North">&#10146;</button>
+          <button id="hm" title="Default View">&#8962;</button>
+          <button id="mn" title="Toggle Layer Menu">&#9776;</button>
+        </div>
+
+        <!-- RIGHT FLOATING TOOLS -->
+        <div class="rc cu">
+          <button id="r1" title="Toggle Status Panel">&#9636;</button>
+          <button id="r2" title="Search Focus">&#9906;</button>
+          <button id="r3" title="Filter Dropdown">&#9660;</button>
+        </div>
+
+        <!-- LAT/LON SEARCH BAR FOR COMMERCIAL VIEW (VIDEO 02:20) -->
+        <div id="ll" class="co">
+          &#128205; <input id="llq" placeholder="Lat, Lon (e.g. 24.8, 67.0)">
+        </div>
+
+        <div id="cd"></div>
+        <div id="pe">Powered by Esri</div>
+      </div>
+
+      <!-- BOTTOM ALARMS / ONLINE STATUS PANEL (VIDEO 00:42 - 01:05) -->
+      <div id="pn" class="cu">
+        <span id="tab">North</span>
+        <div id="pn-content">
+          <table class="st">
+            <thead>
+              <tr id="th">
+                <th>LOS</th>
+                <th>GEM Packet Loss</th>
+                <th>Low Optical Power</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr id="tb">
+                <!-- Dynamically populated counts -->
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- DEDICATED FULL-PAGE FIELD TASKS INTERFACE (MATCHING EXACT ENTERPRISE SCREENSHOT) -->
+  <div id="field-tasks-view">
+    <!-- LEFT SIDEBAR -->
+    <aside class="ft-sidebar">
+      <div class="ft-brand">
+        <div class="ft-brand-title">Transworld</div>
+        <div class="ft-brand-sub">GIS &amp; NOC Portal</div>
+      </div>
+      <nav class="ft-nav">
+        <div class="ft-nav-item" id="ft-nav-map" onclick="closeFieldTasksView()">Network Map</div>
+        <div class="ft-nav-item active" id="ft-nav-tasks" onclick="filterFieldTasks('all')">Field Tasks</div>
+        <div class="ft-nav-item" id="ft-nav-teams" onclick="openRegionalTeamsModal()">Regional Teams</div>
+        <div class="ft-nav-item" id="ft-nav-approvals" onclick="filterFieldTasks('review')">Approvals</div>
+        <div class="ft-nav-item" id="ft-nav-subs" onclick="closeFieldTasksView()">Subscribers</div>
+        <div class="ft-nav-item" id="ft-nav-reports" onclick="downloadAuditReport()">Reports</div>
+      </nav>
+      <div style="margin-top:auto;padding:16px 20px;border-top:1px solid #1c2636">
+        <button class="b" onclick="closeFieldTasksView()" style="width:100%;height:32px;font-size:12px;background:#161f2e;border:1px solid #283548;color:#c9d1d9">&#8592; Back to Map</button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="ft-main">
+      <!-- HEADER -->
+      <div class="ft-header-row">
+        <div>
+          <h1 class="ft-page-title">Field Tasks</h1>
+          <div class="ft-page-sub">Assign work and review submissions from the field teams</div>
+        </div>
+        <button class="ft-btn-assign" id="ft-btn-assign-task" onclick="openAssignTaskModalFromView()">Assign task</button>
+      </div>
+
+      <!-- KPI METRIC CARDS (MATCHING USER SCREENSHOT EXACTLY) -->
+      <div class="ft-kpi-grid">
+        <div class="ft-kpi-card" onclick="setTaskStatusFilter('Pending')" style="cursor:pointer">
+          <div class="ft-kpi-label">Pending</div>
+          <div class="ft-kpi-val" id="ft-val-pending">3</div>
+        </div>
+        <div class="ft-kpi-card" onclick="setTaskStatusFilter('In Progress')" style="cursor:pointer">
+          <div class="ft-kpi-label">In progress</div>
+          <div class="ft-kpi-val" id="ft-val-progress">2</div>
+        </div>
+        <div class="ft-kpi-card highlight" onclick="setTaskStatusFilter('Submitted for Review')" style="cursor:pointer">
+          <div class="ft-kpi-label">Waiting for your review</div>
+          <div class="ft-kpi-val" id="ft-val-review">2</div>
+        </div>
+        <div class="ft-kpi-card" onclick="setTaskStatusFilter('Accepted')" style="cursor:pointer">
+          <div class="ft-kpi-label">Accepted</div>
+          <div class="ft-kpi-val" id="ft-val-accepted">1</div>
+        </div>
+      </div>
+
+      <!-- FILTER ROW -->
+      <div class="ft-filters-row">
+        <select class="ft-select" id="ft-sel-region" onchange="renderFieldTasksTable()">
+          <option value="All">All regions</option>
+          <option value="North">North</option>
+          <option value="Central">Central</option>
+          <option value="South">South</option>
+        </select>
+        <select class="ft-select" id="ft-sel-type" onchange="renderFieldTasksTable()">
+          <option value="All">All types</option>
+          <option value="Database">Database</option>
+          <option value="Survey">Survey</option>
+          <option value="BOQ">BOQ</option>
+          <option value="Planning">Planning</option>
+        </select>
+        <select class="ft-select" id="ft-sel-status" onchange="renderFieldTasksTable()">
+          <option value="All">All statuses</option>
+          <option value="Submitted for Review">In review</option>
+          <option value="In Progress">In progress</option>
+          <option value="Pending">Pending</option>
+          <option value="Accepted">Accepted</option>
+          <option value="Rejected">Rejected</option>
+        </select>
+      </div>
+
+      <!-- SPLIT TABLE & DETAILS / REVIEW -->
+      <div class="ft-split-view">
+        <!-- LEFT: TABLE -->
+        <div class="ft-table-card">
+          <table class="ft-table">
+            <thead>
+              <tr>
+                <th style="width:34%">Task</th>
+                <th style="width:14%">Type</th>
+                <th style="width:18%">Assigned to</th>
+                <th style="width:12%">Priority</th>
+                <th style="width:12%">Status</th>
+                <th style="width:10%">Due</th>
+              </tr>
+            </thead>
+            <tbody id="ft-table-tbody">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- RIGHT: SELECTED TASK DETAILS / REVIEW CARD -->
+        <div class="ft-review-card" id="ft-review-panel">
+          <!-- Dynamically populated based on selected task -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- DEDICATED FULL-PAGE TEAM MEMBER MY TASKS INTERFACE (MATCHING USER SCREENSHOT EXACTLY FOR ALL MEMBERS) -->
+  <div id="member-tasks-view">
+    <!-- TOP BAR -->
+    <header class="mt-topbar">
+      <div class="mt-brand">Transworld</div>
+      <div class="mt-top-nav">
+        <span class="mt-nav-link" onclick="closeMemberTasksView()">Network Map</span>
+        <span class="mt-nav-link active">My Tasks</span>
+        <span class="mt-user-info" id="mt-user-badge">Muhammad Ali | North</span>
+      </div>
+    </header>
+
+    <!-- MAIN BODY -->
+    <main class="mt-main">
+      <!-- HEADER ROW -->
+      <div class="mt-header-row">
+        <h1 class="mt-title">My Tasks</h1>
+        <div class="mt-kpi-pills">
+          <button class="mt-pill" id="mt-pill-todo" onclick="switchMemberTaskTab('todo')">To do <span id="mt-count-todo">[1]</span></button>
+          <button class="mt-pill" id="mt-pill-progress" onclick="switchMemberTaskTab('progress')">In progress <span id="mt-count-progress">[0]</span></button>
+          <button class="mt-pill overdue" id="mt-pill-overdue" onclick="switchMemberTaskTab('overdue')">Overdue <span id="mt-count-overdue">[0]</span></button>
+        </div>
+      </div>
+
+      <!-- SPLIT CONTENT -->
+      <div class="mt-split">
+        <!-- LEFT COLUMN: TASK LIST WITH 4 TABS -->
+        <div class="mt-left-col">
+          <div class="mt-tabs">
+            <div class="mt-tab active" id="tab-btn-mt-todo" onclick="switchMemberTaskTab('todo')">To do</div>
+            <div class="mt-tab" id="tab-btn-mt-progress" onclick="switchMemberTaskTab('progress')">In progress</div>
+            <div class="mt-tab" id="tab-btn-mt-submitted" onclick="switchMemberTaskTab('submitted')">Submitted</div>
+            <div class="mt-tab" id="tab-btn-mt-completed" onclick="switchMemberTaskTab('completed')">Completed</div>
+          </div>
+          <div class="mt-cards-list" id="mt-cards-list">
+            <!-- Dynamically populated cards -->
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: SELECTED TASK DETAILS & EXECUTION -->
+        <div class="mt-right-col" id="mt-detail-panel">
+          <!-- Dynamically populated task details and submission form -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ROLE-BASED FIELD DISPATCH & TASK MANAGEMENT DRAWER -->
+  <div id="dispatch-drawer">
+    <div class="dd-header">
+      <div class="dd-title">
+        Field Dispatch & Task Management
+      </div>
+      <button class="dd-close" id="btn-close-dispatch" title="Close Drawer">&times;</button>
+    </div>
+
+    <!-- ACTIVE USER / ROLE SWITCHER -->
+    <div class="role-bar">
+      <div class="role-badge">
+        <div class="avatar" id="current-user-avatar" style="background:#f59e0b;font-weight:700;font-size:10px">ADM</div>
+        <div>
+          <div id="current-user-name" style="color:#fff;font-size:12px;font-weight:700">Engr. Tariq Mehmood</div>
+          <div id="current-user-desc" style="color:#8b949e;font-size:10px">Role: Boss (Admin & Dispatch)</div>
+        </div>
+      </div>
+      <div class="role-switcher" id="drawer-user-switcher-wrap">
+        <label style="font-size:11px;color:#8b949e">Switch User:</label>
+        <select id="select-active-user">
+          <option value="boss@transworld.com" data-role="Boss" data-name="Engr. Tariq Mehmood (Boss)">Boss (Admin / Dispatch)</option>
+          <optgroup label="North Team (25 Members)">
+            <option value="ali.north@transworld.com" data-role="Member" data-name="Muhammad Ali (North)">Muhammad Ali (GIS Surveyor)</option>
+            <option value="usman.north@transworld.com" data-role="Member" data-name="Usman Khan (North)">Usman Khan (Planning Engr)</option>
+            <option value="hamza.north@transworld.com" data-role="Member" data-name="Hamza Tariq (North)">Hamza Tariq (BOQ Lead)</option>
+            <option value="asad.north@transworld.com" data-role="Member" data-name="Asadullah (North)">Asadullah (Database Specialist)</option>
+          </optgroup>
+          <optgroup label="South Team (10 Members)">
+            <option value="arham.south@transworld.com" data-role="Member" data-name="Arham Butt (South)">Arham Butt (Field Surveyor)</option>
+            <option value="ehsan.south@transworld.com" data-role="Member" data-name="Ehsan Ullah (South)">Ehsan Ullah (BOQ Estimator)</option>
+          </optgroup>
+          <optgroup label="Central Team (12 Members)">
+            <option value="adeel.central@transworld.com" data-role="Member" data-name="Adeel Qureshi (Central)">Adeel Qureshi (Field Surveyor)</option>
+            <option value="azam.central@transworld.com" data-role="Member" data-name="Azam Khan (Central)">Azam Khan (GIS Engineer)</option>
+          </optgroup>
+        </select>
+      </div>
+    </div>
+
+    <!-- NAVIGATION TABS -->
+    <div class="dd-nav">
+      <button class="dd-tab active" data-tab="tab-tasks">
+        <span>Field Tasks</span>
+        <span class="tab-count" id="count-tasks-tab">8</span>
+      </button>
+      <button class="dd-tab" data-tab="tab-teams">
+        <span>Regional Teams</span>
+        <span class="tab-count">48</span>
+      </button>
+      <button class="dd-tab" id="tab-btn-approvals" data-tab="tab-approvals">
+        <span>Approvals Desk</span>
+        <span class="tab-count" id="count-approvals-tab" style="background:rgba(225,29,72,0.25);color:#ff6b81">2</span>
+      </button>
+    </div>
+
+    <!-- DRAWER BODY -->
+    <div class="dd-body">
+      <!-- TAB 1: FIELD TASKS -->
+      <div id="tab-tasks" class="tab-pane">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="dd-filters">
+            <select id="filt-task-region">
+              <option value="All">All Regions</option>
+              <option value="North">North Region</option>
+              <option value="Central">Central Region</option>
+              <option value="South">South Region</option>
+            </select>
+            <select id="filt-task-type">
+              <option value="All">All Categories</option>
+              <option value="Survey Task">Survey Task</option>
+              <option value="BOQ Task">BOQ Task</option>
+              <option value="Planning Task">Planning Task</option>
+              <option value="Database Task">Database Task</option>
+            </select>
+            <select id="filt-task-status">
+              <option value="All">All Statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Submitted for Review">Submitted for Review</option>
+              <option value="Accepted">Accepted</option>
+            </select>
+          </div>
+
+          <!-- BOSS ACTION: ASSIGN NEW TASK -->
+          <button class="btn-pri" id="btn-open-assign-modal" style="display:flex;align-items:center;gap:4px;padding:6px 12px;font-size:11.5px">
+            <span>+</span> Assign Task
+          </button>
+        </div>
+
+        <div class="task-list" id="task-cards-container">
+          <!-- Dynamically populated from /api/tasks -->
+        </div>
+      </div>
+
+      <!-- TAB 2: REGIONAL TEAMS DIRECTORY (NORTH 25, SOUTH 10, CENTRAL 12) -->
+      <div id="tab-teams" class="tab-pane" style="display:none">
+        <div style="font-size:11.5px;color:#8b949e;margin-bottom:12px">
+          Official Transworld regional field operations team directory:
+        </div>
+
+        <!-- NORTH REGION (25 MEMBERS) -->
+        <div class="team-region-box">
+          <div class="tr-header" onclick="toggleRegionList('north')">
+            <span>North Region Engineering Team (25 Members)</span>
+            <span id="arrow-north" style="font-size:11px">&#9660;</span>
+          </div>
+          <div class="tr-members-grid" id="grid-north"></div>
+        </div>
+
+        <!-- CENTRAL REGION (12 MEMBERS) -->
+        <div class="team-region-box">
+          <div class="tr-header" onclick="toggleRegionList('central')">
+            <span>Central Region Engineering Team (12 Members)</span>
+            <span id="arrow-central" style="font-size:11px">&#9660;</span>
+          </div>
+          <div class="tr-members-grid" id="grid-central"></div>
+        </div>
+
+        <!-- SOUTH REGION (10 MEMBERS) -->
+        <div class="team-region-box">
+          <div class="tr-header" onclick="toggleRegionList('south')">
+            <span>South Region Engineering Team (10 Members)</span>
+            <span id="arrow-south" style="font-size:11px">&#9660;</span>
+          </div>
+          <div class="tr-members-grid" id="grid-south"></div>
+        </div>
+      </div>
+
+      <!-- TAB 3: APPROVALS & REVIEW DESK (BOSS ONLY) -->
+      <div id="tab-approvals" class="tab-pane" style="display:none">
+        <div style="background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);padding:10px 12px;border-radius:6px;font-size:12px;color:#fbbf24;margin-bottom:14px;line-height:1.4">
+          <b>Approvals & Review Queue:</b> Tasks submitted by field engineers and surveyors requiring your executive sign-off and approval before completion.
+        </div>
+        <div class="task-list" id="approval-cards-container">
+          <!-- Populated with 'Submitted for Review' tasks -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 1: ASSIGN NEW TASK (BOSS ONLY) -->
+  <div class="modal-overlay" id="modal-assign-task">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Dispatch New Field Task</h3>
+        <button class="dd-close" onclick="closeModal('modal-assign-task')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Task Title *</label>
+          <input type="text" id="task-input-title" placeholder="e.g. Physical Feeder Route Survey for Sector G-11">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Task Category *</label>
+            <select id="task-input-type">
+              <option value="Survey Task">Survey Task</option>
+              <option value="BOQ Task">BOQ Task (Bill of Quantity)</option>
+              <option value="Planning Task">Planning Task</option>
+              <option value="Database Task">Database Task</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Region *</label>
+            <select id="task-input-region">
+              <option value="North">North Region</option>
+              <option value="Central">Central Region</option>
+              <option value="South">South Region</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Assign To Team Member *</label>
+          <select id="task-input-assignee">
+            <!-- Dynamically populated based on chosen region -->
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Target Area / Landmark *</label>
+            <input type="text" id="task-input-area" placeholder="e.g. Eden Valley Block B, Street 4">
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <select id="task-input-priority">
+              <option value="Critical">Critical (Immediate Attention)</option>
+              <option value="High" selected>High Priority</option>
+              <option value="Medium">Medium Priority</option>
+              <option value="Low">Low Priority</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Latitude (Coordinates)</label>
+            <input type="number" step="0.000001" id="task-input-lat" placeholder="31.436500">
+          </div>
+          <div class="form-group">
+            <label>Longitude (Coordinates)</label>
+            <input type="number" step="0.000001" id="task-input-lng" placeholder="73.155400">
+          </div>
+        </div>
+        <button type="button" class="btn-sec" id="btn-use-map-center" style="font-size:11px;padding:4px 8px;align-self:flex-start">
+          Use Current Map Center Coordinates
+        </button>
+
+        <div class="form-group">
+          <label>Deadline Date & Time *</label>
+          <input type="datetime-local" id="task-input-deadline">
+        </div>
+
+        <div class="form-group">
+          <label>Scope of Work / Instructions</label>
+          <textarea id="task-input-desc" rows="3" placeholder="Provide clear technical instructions for the field surveyor or engineer..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-sec" onclick="closeModal('modal-assign-task')">Cancel</button>
+        <button class="btn-pri" id="btn-submit-create-task">Dispatch Task</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: SUBMIT TASK REPORT (MEMBER WORKFLOW) -->
+  <div class="modal-overlay" id="modal-submit-task">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Submit Task Completion Report</h3>
+        <button class="dd-close" onclick="closeModal('modal-submit-task')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="submit-modal-task-info" style="font-size:12px;background:#0d1117;padding:10px;border-radius:4px;border:1px solid #30363d"></div>
+
+        <div class="form-group">
+          <label>Survey Findings & Work Notes *</label>
+          <textarea id="submit-input-notes" rows="4" placeholder="Detail your survey findings, measurements, or completion notes for the Boss to review..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Attached Document / Report Filename *</label>
+          <input type="text" id="submit-input-report-name" placeholder="e.g. feeder_route_survey_report_v1.pdf, boq_quantities.xlsx">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-sec" onclick="closeModal('modal-submit-task')">Cancel</button>
+        <button class="btn-pri" id="btn-confirm-submit-task" style="background:#8b5cf6">Submit for Boss Approval</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 3: REVIEW TASK (BOSS WORKFLOW) -->
+  <div class="modal-overlay" id="modal-review-task">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Executive Task Review & Decision</h3>
+        <button class="dd-close" onclick="closeModal('modal-review-task')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="review-modal-task-info" style="font-size:12px;background:#0d1117;padding:10px;border-radius:4px;border:1px solid #30363d"></div>
+
+        <div style="background:rgba(139,92,246,0.12);border:1px solid rgba(139,92,246,0.3);padding:10px;border-radius:4px">
+          <div style="font-size:11px;font-weight:700;color:#c084fc;margin-bottom:4px">MEMBER SUBMISSION REPORT:</div>
+          <div id="review-modal-notes" style="font-size:12px;color:#fff;line-height:1.4"></div>
+          <div id="review-modal-report-link" style="font-size:11px;color:#58a6ff;font-family:Consolas,monospace;margin-top:6px"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Boss Feedback & Remarks (Optional)</label>
+          <textarea id="review-input-feedback" rows="3" placeholder="Enter remarks, approval notes, or required rework instructions..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-sec" onclick="closeModal('modal-review-task')">Cancel</button>
+        <button class="btn-danger" id="btn-reject-task">Reject & Re-assign</button>
+        <button class="btn-success" id="btn-accept-task">Accept & Approve</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+var $ = function(id) { return document.getElementById(id); };
+var EYE = '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M12 5C7 5 2.7 8.1 1 12c1.7 3.9 6 7 11 7s9.3-3.1 11-7c-1.7-3.9-6-7-11-7zm0 11.5a4.5 4.5 0 110-9 4.5 4.5 0 010 9zm0-7a2.5 2.5 0 100 5 2.5 2.5 0 000-5z"/></svg>';
+
+/* =========================================================================
+   LOGIN PARTICLE NETWORK CANVAS (EXACT VIDEO MATCH)
+   ========================================================================= */
+(function() {
+  var c = $('net'), x = c.getContext('2d'), N = [];
+  function resize() {
+    c.width = innerWidth; c.height = innerHeight;
+    x.clearRect(0, 0, c.width, c.height);
+    for (var i = 0; i < N.length; i++) {
+      for (var j = i + 1; j < N.length; j++) {
+        var dx = (N[i][0] - N[j][0]) * c.width, dy = (N[i][1] - N[j][1]) * c.height;
+        if (dx * dx + dy * dy < 28000) {
+          x.strokeStyle = 'rgba(160, 185, 255, 0.25)';
+          x.lineWidth = 0.8;
+          x.beginPath();
+          x.moveTo(N[i][0] * c.width, N[i][1] * c.height);
+          x.lineTo(N[j][0] * c.width, N[j][1] * c.height);
+          x.stroke();
+        }
+      }
+      x.fillStyle = '#ffea9f';
+      x.fillRect(N[i][0] * c.width, N[i][1] * c.height, 2, 2);
+    }
+  }
+  for (var i = 0; i < 110; i++) N.push([Math.random(), Math.random()]);
+  resize();
+  window.addEventListener('resize', resize);
+})();
+
+// Default Directory of Team Members for Instant Login Loading
+var defaultTeamDirectory = {
+  North: [
+    { name: 'Muhammad Ali', email: 'ali.north@transworld.com', designation: 'Senior GIS Surveyor', role: 'Member', region: 'North', phone: '0300-1110001', avatar_color: '#3b82f6' },
+    { name: 'Usman Khan', email: 'usman.north@transworld.com', designation: 'Network Planning Engineer', role: 'Member', region: 'North', phone: '0300-1110002', avatar_color: '#10b981' },
+    { name: 'Hamza Tariq', email: 'hamza.north@transworld.com', designation: 'BOQ Estimator Lead', role: 'Member', region: 'North', phone: '0300-1110003', avatar_color: '#8b5cf6' },
+    { name: 'Bilal Ahmed', email: 'bilal.north@transworld.com', designation: 'FTTH Field Technician', role: 'Member', region: 'North', phone: '0300-1110004', avatar_color: '#ec4899' },
+    { name: 'Asadullah', email: 'asad.north@transworld.com', designation: 'Database Specialist', role: 'Member', region: 'North', phone: '0300-1110005', avatar_color: '#06b6d4' },
+    { name: 'Zain ul Abideen', email: 'zain.north@transworld.com', designation: 'Optical Power Technician', role: 'Member', region: 'North', phone: '0300-1110006', avatar_color: '#f97316' },
+    { name: 'Faisal Raza', email: 'faisal.north@transworld.com', designation: 'Route Surveyor', role: 'Member', region: 'North', phone: '0300-1110007', avatar_color: '#14b8a6' },
+    { name: 'Kashif Nawaz', email: 'kashif.north@transworld.com', designation: 'OLT Integration Specialist', role: 'Member', region: 'North', phone: '0300-1110008', avatar_color: '#6366f1' },
+    { name: 'Naveed Akhtar', email: 'naveed.north@transworld.com', designation: 'Civil & Trench Lead', role: 'Member', region: 'North', phone: '0300-1110009', avatar_color: '#eab308' },
+    { name: 'Sana Sheikh', email: 'sana.north@transworld.com', designation: 'GIS Analyst', role: 'Member', region: 'North', phone: '0300-1110010', avatar_color: '#a855f7' }
+  ],
+  Central: [
+    { name: 'Adeel Qureshi', email: 'adeel.central@transworld.com', designation: 'Field Route Surveyor', role: 'Member', region: 'Central', phone: '0300-3330002', avatar_color: '#3b82f6' },
+    { name: 'Adnan Siddiqui', email: 'adnan.central@transworld.com', designation: 'BOQ Quantity Analyst', role: 'Member', region: 'Central', phone: '0300-3330003', avatar_color: '#10b981' },
+    { name: 'Azam Khan', email: 'azam.central@transworld.com', designation: 'GIS Senior Engineer', role: 'Member', region: 'Central', phone: '0300-3330004', avatar_color: '#06b6d4' },
+    { name: 'Abdul Basit', email: 'basit.central@transworld.com', designation: 'Network Route Planner', role: 'Member', region: 'Central', phone: '0300-3330005', avatar_color: '#8b5cf6' },
+    { name: 'Mohammad Rizwan', email: 'rizwan.central@transworld.com', designation: 'Central Regional Supervisor', role: 'Member', region: 'Central', phone: '0300-3330001', avatar_color: '#f59e0b' },
+    { name: 'Danyal Ahmed', email: 'danyal.central@transworld.com', designation: 'Field Operations Tech', role: 'Member', region: 'Central', phone: '0300-3330006', avatar_color: '#ec4899' }
+  ],
+  South: [
+    { name: 'Arham Butt', email: 'arham.south@transworld.com', designation: 'Field Surveyor', role: 'Member', region: 'South', phone: '0300-2220002', avatar_color: '#3b82f6' },
+    { name: 'Ehsan Ullah', email: 'ehsan.south@transworld.com', designation: 'BOQ Estimator Lead', role: 'Member', region: 'South', phone: '0300-2220005', avatar_color: '#8b5cf6' },
+    { name: 'Babar Azam', email: 'babar.south@transworld.com', designation: 'GIS Specialist', role: 'Member', region: 'South', phone: '0300-2220003', avatar_color: '#10b981' },
+    { name: 'Dawood Khan', email: 'dawood.south@transworld.com', designation: 'Network Planner', role: 'Member', region: 'South', phone: '0300-2220004', avatar_color: '#06b6d4' },
+    { name: 'Tariq Jameel', email: 'tariq.south@transworld.com', designation: 'South Regional Lead', role: 'Member', region: 'South', phone: '0300-2220001', avatar_color: '#f59e0b' }
+  ]
+};
+
+window.currentLoginRole = 'admin';
+
+window.switchLoginRole = function(role) {
+  window.currentLoginRole = role;
+  var btnAdmin = $('btn-tab-admin');
+  var btnMember = $('btn-tab-member');
+  var paneAdmin = $('pane-admin-login');
+  var paneMember = $('pane-member-login');
+  var err = $('lerr');
+  if (err) err.textContent = '';
+
+  if (role === 'admin') {
+    if (btnAdmin) { btnAdmin.classList.add('active'); btnAdmin.classList.remove('member'); }
+    if (btnMember) { btnMember.classList.remove('active', 'member'); }
+    if (paneAdmin) paneAdmin.style.display = 'block';
+    if (paneMember) paneMember.style.display = 'none';
+  } else {
+    if (btnMember) { btnMember.classList.add('active', 'member'); }
+    if (btnAdmin) { btnAdmin.classList.remove('active'); }
+    if (paneMember) paneMember.style.display = 'block';
+    if (paneAdmin) paneAdmin.style.display = 'none';
+    window.onRegionChangeLogin();
+  }
+};
+
+window.onRegionChangeLogin = function() {
+  var regSel = $('login-member-region');
+  var reg = regSel ? regSel.value : 'North';
+  var emailInp = $('member-email');
+  if (emailInp) {
+    if (reg === 'North') emailInp.value = 'ali.north@transworld.com';
+    else if (reg === 'Central') emailInp.value = 'adeel.central@transworld.com';
+    else if (reg === 'South') emailInp.value = 'arham.south@transworld.com';
+  }
+};
+
+window.quickLoginAdmin = function() {
+  window.switchLoginRole('admin');
+  if ($('admin-user')) $('admin-user').value = 'boss@transworld.com';
+};
+
+window.quickLoginMember = function(email) {
+  window.switchLoginRole('member');
+  var reg = 'North';
+  if (email.indexOf('central') > -1) reg = 'Central';
+  else if (email.indexOf('south') > -1) reg = 'South';
+
+  if ($('login-member-region')) $('login-member-region').value = reg;
+  window.updateMemberLoginList();
+
+  if ($('login-member-select')) $('login-member-select').value = email;
+  window.onMemberSelectChange();
+  window.switchLoginRole('member');
+};
+
+/* =========================================================================
+   TOPOLOGY & GIS SIMULATION ENGINE (Faisalabad & Islamabad Sectors)
+   ========================================================================= */
+var AR = [
+  { n: 'North', nm: 'Eden Valley & Margalla View', lat: 31.4357, lng: 73.1549, c: '#3f51b5' },
+  { n: 'Central', nm: 'Eden Garden', lat: 31.4246, lng: 73.1445, c: '#43a047' },
+  { n: 'South', nm: 'Eden Garden Executive Block', lat: 31.4224, lng: 73.1490, c: '#fdd835' }
+];
+
+var TH = -20, S = 19;
+function rnd() { S = (S * 16807) % 2147483647; return (S - 1) / 2147483646; }
+
+function pt(a, u, v) {
+  var t = TH * Math.PI / 180, x = u - 192, y = v - 99;
+  return [
+    a.lat + (x * Math.sin(t) + y * Math.cos(t)) / 111320,
+    a.lng + (x * Math.cos(t) - y * Math.sin(t)) / (111320 * Math.cos(a.lat * Math.PI / 180))
+  ];
+}
+
+var ST = {
+  on: ['Online', '#2ecc40'],
+  po: ['Powered Off', '#9e9e9e'],
+  ld: ['Link Down', '#e53935'],
+  gem: ['GEM Packet Loss', '#ab47bc'],
+  lo: ['Low Optical Power', '#ff9800']
+};
+
+var FN = 'Waseem,Ahmed,Ali,Usman,Bilal,Hamza,Waleed,Imran,Asad,Zain,Faisal,Kashif,Naveed,Sana,Ayesha,Tariq'.split(',');
+var LN = 'Shahid,Khan,Butt,Malik,Rana,Chaudhry,Iqbal,Ansari,Sheikh,Raza,Mirza,Gill,Bhatti'.split(',');
+var PLANS = [10, 20, 40, 60];
+
+var CU = [], PL = [], FAT = [], ODB = [], JT = [], POP = [], FD = [], DS = [], BK = [], CV = [], ZN = [];
+var ontIdBase = 510311100;
+var pick = function(a) { return a[Math.floor(rnd() * a.length)]; };
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+AR.forEach(function(a, ai) {
+  var sy = [54, 120, 186], pop = pt(a, -4, 120);
+  POP.push({ a: a, p: pop });
+  FD.push([pt(a, -4, 54), pt(a, -4, 186)]);
+  BK.push(pop);
+
+  for (var j = 0; j < 3; j++) {
+    var y = sy[j];
+    FD.push([pt(a, -4, y), pt(a, 384, y)]);
+    JT.push(pt(a, -4, y));
+    CV.push([pt(a, -8, 54), pt(a, -8, 186)]);
+
+    for (var m = 0; m < 2; m++) {
+      var uo = 96 + 192 * m;
+      ODB.push(pt(a, uo, y));
+
+      for (var q = 0; q < 2; q++) {
+        var i = 2 * m + q, u0 = 4 + 96 * i, v0 = j * 66 + 6;
+        var fp = pt(a, u0 + 44, y - 12);
+        var fid = '5108' + (ai + 1) + pad(j) + pad(i) + '3';
+        var oid = '5108' + (ai + 1) + pad(j) + m;
+        FAT.push(fp);
+        DS.push([pt(a, uo, y + 3), pt(a, u0 + 44, y + 3), fp]);
+
+        for (var k = 0; k < 8; k++) {
+          var A = pt(a, u0 + k * 11, v0);
+          var B = pt(a, u0 + k * 11 + 11, v0);
+          var C = pt(a, u0 + k * 11 + 11, v0 + 30);
+          var D = pt(a, u0 + k * 11, v0 + 30);
+          PL.push([A, B, C, D]);
+        }
+      }
+    }
+  }
+  ZN.push([pt(a, -24, 26), pt(a, 404, 26), pt(a, 404, 220), pt(a, -24, 220)]);
+});
+
+/* =========================================================================
+   DATABASE LOADER (EXCLUSIVELY RENDERS REAL PGADMIN 4 POSTGRESQL DATA)
+   ========================================================================= */
+function loadCustomersFromDB(callback) {
+  var apiUrl = (window.location.port === '5000') ? '' : 'http://localhost:5000';
+  fetch('/api/customers', { credentials: 'same-origin' })
+    .then(function(res) { return res.json(); })
+    .then(function(dbData) {
+      if (Array.isArray(dbData) && dbData.length > 0) {
+        CU = dbData.map(function(item) {
+          var statusKey = 'on';
+          if (item.connection_status === 'Powered Off') statusKey = 'po';
+          else if (item.connection_status === 'Link Down') statusKey = 'ld';
+          else if (item.connection_status === 'GEM Packet Loss') statusKey = 'gem';
+          else if (item.connection_status === 'Low Optical Power') statusKey = 'lo';
+
+          return {
+            ll: [item.lat, item.lng],
+            s: statusKey,
+            up: item.is_up,
+            name: item.subscriber_name,
+            id: item.ont_id,
+            addr: item.service_address,
+            odb: item.odb_id || '5108101',
+            fat: item.fat_id || '510810403',
+            area: item.area_name,
+            sub: item.sub_area || '',
+            olt: item.olt_name || 'ISB-F11-OLT-5-1',
+            slot: '' + (item.slot_no !== undefined ? item.slot_no : 5),
+            port: '' + (item.port_no !== undefined ? item.port_no : 1),
+            on: 'ONT-' + (parseInt(item.ont_id) % 1000 || item.ont_id),
+            cause: item.last_down_cause || 'None',
+            alarm: item.current_alarm || 'Online',
+            bw: item.bandwidth_plan || '40MB',
+            bwVal: item.bandwidth_mbps || 40,
+            liveDl: (item.live_dl !== undefined ? parseFloat(item.live_dl) : 34.0).toFixed(1),
+            liveUl: (item.live_ul !== undefined ? parseFloat(item.live_ul) : 8.0).toFixed(1),
+            lu: '2026-09-28 11:34:27 pm',
+            ld: '2026-09-28 11:29:00 pm',
+            ft: '2026-09-28 11:29:00 pm',
+            ro: item.rx_ont_dbm !== undefined ? item.rx_ont_dbm : -21.56,
+            rl: item.rx_olt_dbm !== undefined ? item.rx_olt_dbm : -23.18
+          };
+        });
+
+        if ($('db-status-val')) {
+          $('db-status-val').textContent = 'pgAdmin 4 (' + CU.length + ' ONTs)';
+        }
+
+        if (map && role === 'cu' && typeof renderCustomerLayers === 'function') {
+          renderCustomerLayers();
+        }
+      }
+      if (callback) callback();
+    })
+    .catch(function(err) {
+      console.warn('Could not reach backend API, check server.py:', err);
+      if (callback) callback();
+    });
+}
+
+/* =========================================================================
+   LAYER TREE CONFIGURATION (MATCHING VIDEO SIDEBAR)
+   ========================================================================= */
+var TREE = {
+  cu: [
+    { k: 'veh', t: 'Vehicles' },
+    { k: 'tasks', t: 'Field Dispatch Tasks' },
+    {
+      k: 'net', t: 'Network Layer', ch: [
+        { k: 'cust', t: 'Active Customer' },
+        { k: 'fat', t: 'FAT' },
+        { k: 'odb', t: 'ODB/DC', tg: 1 },
+        { k: 'joint', t: 'Joint' },
+        { k: 'pop', t: 'POP', tg: 1 },
+        {
+          k: 'fiber', t: 'Fiber', ch: [
+            { k: 'feeder', t: 'Feeder' },
+            { k: 'dist', t: 'Distribution' },
+            { k: 'back', t: 'Backhaul' }
+          ]
+        },
+        {
+          k: 'civil', t: 'Civil', ch: [
+            { k: 'trench', t: 'Trench' },
+            { k: 'mh', t: 'Manhole' }
+          ]
+        },
+        { k: 'zone', t: 'Zone' }
+      ]
+    }
+  ],
+  co: [
+    {
+      k: 'tfs', t: 'TFS Coverage', ch: [
+        { k: 'cpop', t: 'POP', tg: 1 },
+        { k: 'pN', t: 'North Parcels', zm: 'North' },
+        { k: 'pC', t: 'Central Parcels', zm: 'Central' },
+        { k: 'pS', t: 'South Parcels', zm: 'South' }
+      ]
+    },
+    {
+      k: 'reg_teams', t: 'Regional Teams Directory', ch: [
+        { k: 'tmN', t: 'North Team (25 Members)' },
+        { k: 'tmC', t: 'Central Team (12 Members)' },
+        { k: 'tmS', t: 'South Team (10 Members)' }
+      ]
+    }
+  ]
+};
+
+/* =========================================================================
+   POPUP BUILDER WITH LIVE SPEED TELEMETRY (AUDIO REQUIREMENT)
+   ========================================================================= */
+function rxBadge(v) {
+  var cls = v < -27 ? ' x' : (v < -24 ? ' w' : '');
+  return '<span class="rx' + cls + '">' + v.toFixed(2) + ' dBm</span>';
+}
+
+function escapeHtml(s) {
+  return String(s === null || s === undefined ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+var esc = escapeHtml;
+
+function row(k, v) {
+  return '<tr><td>' + k + '</td><td>' + esc(v) + '</td></tr>';
+}
+
+function cpop(d) {
+  var faultBanner = d.s === 'on' 
+    ? '<div class="fl up">Fault has been cleared</div>' 
+    : '<div class="fl dn">Fault is active (' + esc(d.alarm) + ')</div>';
+
+  var pct = Math.min(100, Math.round((parseFloat(d.liveDl) / d.bwVal) * 100));
+
+  // LIVE BANDWIDTH TELEMETRY MODULE
+  var liveSpeedBox = d.up ? (
+    '<div class="live-speed-box">' +
+      '<div class="live-speed-header">' +
+        '<span>BACKEND LIVE SPEED STREAM</span>' +
+        '<span>' + pct + '% LOAD</span>' +
+      '</div>' +
+      '<div class="live-speed-readout">' +
+        '<div>DL: <b style="color:#00e5ff">' + d.liveDl + ' Mbps</b></div>' +
+        '<div>UL: <b style="color:#b388ff">' + d.liveUl + ' Mbps</b></div>' +
+      '</div>' +
+      '<div class="live-bar-track"><div class="live-bar-fill" style="width:' + pct + '%"></div></div>' +
+    '</div>'
+  ) : '<div class="live-speed-box" style="color:#ff8a8a">ONT Offline - No Live Throughput</div>';
+
+  return '<div class="pp">' +
+    '<div class="pt">' +
+      '<b>Customer ONT - <span class="' + (d.up ? 'up' : 'dn') + '">' + (d.up ? 'UP' : 'DOWN') + '</span></b>' +
+      '<i onclick="this.closest(\'.pp\').classList.toggle(\'col\')" title="Collapse">&#8964;</i>' +
+      '<i onclick="map.closePopup()" title="Close">&#10005;</i>' +
+    '</div>' +
+    faultBanner +
+    liveSpeedBox +
+    '<div class="sc"><table>' +
+      row('Name', d.name) +
+      row('ID', d.id) +
+      row('Address', d.addr) +
+      row('DC/ODB ID', d.odb) +
+      row('FAT ID', d.fat) +
+      row('Type', 'Retail') +
+      row('Area', d.area) +
+      row('Sub Area', d.sub) +
+      row('City', 'Islamabad') +
+      row('OLT', d.olt) +
+      row('Frame', '0') +
+      row('Slot', d.slot) +
+      row('Port', d.port) +
+      row('ONT ID', d.on) +
+      row('Last Down Cause', d.cause) +
+      row('Current Alarm Info', d.alarm) +
+      row('Bandwidth', d.bw) +
+      row('Last UP Time', d.lu) +
+      row('Last Down Time', d.ld) +
+      row('Fault Time', d.ft) +
+      row('Rx @ ONT', rxBadge(d.ro)) +
+      row('Rx @ OLT', rxBadge(d.rl)) +
+    '</table></div>' +
+    '<div class="zt" onclick="map.flyTo([' + d.ll + '], 19)">&#9906; Zoom to</div>' +
+  '</div>';
+}
+
+function gpop(t, r) {
+  return '<div class="pp">' +
+    '<div class="pt"><b>' + t + '</b><i onclick="map.closePopup()">&#10005;</i></div>' +
+    '<div class="sc"><table>' + r.map(function(x) { return row(x[0], x[1]); }).join('') + '</table></div>' +
+    '<div class="zt" onclick="map.flyTo(map.getCenter(), 18)">&#9906; Zoom to</div>' +
+  '</div>';
+}
+
+function opt() {
+  return { className: 'dk', closeButton: false, maxWidth: 350, minWidth: 340 };
+}
+
+/* =========================================================================
+   LEAFLET MAP & APPLICATION LOGIC
+   ========================================================================= */
+var map, G = {}, on = {}, P = {}, role, Z = {}, sel = { on: true, po: true, ld: true, gem: true, lo: true };
+
+function eff(k) {
+  var n = P[k];
+  while (n) { if (!on[n.k]) return false; n = n.p; }
+  return true;
+}
+
+function sync() {
+  Object.keys(G).forEach(function(k) {
+    var v = eff(k);
+    if (v && !map.hasLayer(G[k])) G[k].addTo(map);
+    if (!v && map.hasLayer(G[k])) map.removeLayer(G[k]);
+  });
+}
+
+function tree(t, box, par) {
+  t.forEach(function(n) {
+    n.p = par; P[n.k] = n; on[n.k] = true;
+    var d = document.createElement('div');
+    d.className = 'nd';
+    d.innerHTML = '<div class="rw">' +
+      '<span class="ar">' + (n.ch ? '&#9661;' : '') + '</span>' +
+      '<span class="eye" title="Hide layer">' + EYE + '</span>' +
+      '<span class="lab">' + n.t + '</span>' +
+      (n.tg ? '<span class="tg" title="Edit">&#9998;</span>' : '') +
+      (n.zm ? '<span class="zm" title="Zoom to">&#9974;</span>' : '') +
+    '</div>';
+
+    var rw = d.firstChild, ch = document.createElement('div');
+    ch.className = 'ch'; // expanded by default as in video
+    d.appendChild(ch);
+    box.appendChild(d);
+
+    if (n.k === 'tasks') {
+      rw.querySelector('.lab').style.cursor = 'pointer';
+      rw.querySelector('.lab').title = 'Open Field Tasks Interface';
+      rw.querySelector('.lab').onclick = function() {
+        window.openFieldTasksView();
+      };
+    }
+
+    rw.querySelector('.eye').onclick = function() {
+      on[n.k] = !on[n.k];
+      this.classList.toggle('off', !on[n.k]);
+      sync();
+    };
+
+    if (n.ch) {
+      rw.querySelector('.ar').onclick = function() {
+        ch.classList.toggle('hide');
+        this.innerHTML = ch.classList.contains('hide') ? '&#9655;' : '&#9661;';
+      };
+      tree(n.ch, ch, n);
+    }
+
+    if (n.zm) {
+      rw.querySelector('.zm').onclick = function() {
+        if (Z[n.zm]) map.flyToBounds(Z[n.zm], { maxZoom: 18, duration: 1.5 });
+      };
+    }
+  });
+}
+
+function updateBottomStats() {
+  var c = { on: 0, po: 0, ld: 0, gem: 0, lo: 0 };
+  CU.forEach(function(d) { c[d.s]++; });
+
+  var onlyOnline = sel.on && !sel.po && !sel.ld && !sel.gem && !sel.lo;
+  var noAlarms = !sel.po && !sel.ld && !sel.gem && !sel.lo;
+
+  if (noAlarms && !sel.on) {
+    // Video 00:56 behavior
+    $('pn-content').innerHTML = '<div class="no-alarms"><b>No Data Available</b>There are currently no alarms in the North region.</div>';
+  } else if (onlyOnline) {
+    // Real online count from PostgreSQL database!
+    $('pn-content').innerHTML = '<table class="st"><thead><tr><th>Online</th></tr></thead><tbody><tr><td>' + c.on + '</td></tr></tbody></table>';
+  } else {
+    // Standard Alarm View with real database counts
+    $('pn-content').innerHTML = '<table class="st">' +
+      '<thead><tr><th>LOS</th><th>GEM Packet Loss</th><th>Low Optical Power</th></tr></thead>' +
+      '<tbody><tr>' +
+        '<td><span class="dt" style="background:#e53935"></span>' + c.ld + ' &nbsp;|&nbsp; <span class="dt" style="background:#ff9800"></span>' + c.po + '</td>' +
+        '<td>' + c.gem + '</td>' +
+        '<td>' + c.lo + '</td>' +
+      '</tr></tbody></table>';
+  }
+}
+
+/* =========================================================================
+   COUPLED GREEN PLOT BOXES & PINS ENGINE
+   ========================================================================= */
+function makePlotPolygon(lat, lng) {
+  var dLat = 0.000085; // ~9.5 meters height
+  var dLng = 0.000095; // ~8.5 meters width
+  return [
+    [lat + dLat, lng - dLng],
+    [lat + dLat, lng + dLng],
+    [lat - dLat, lng + dLng],
+    [lat - dLat, lng - dLng]
+  ];
+}
+
+function renderCustomerLayers() {
+  if (!map || role !== 'cu') return;
+  if (!G.cust) G.cust = L.layerGroup();
+  G.cust.clearLayers();
+
+  CU.forEach(function(d) {
+    // 1. Create coupled Green Plot Box (Polygon) for this customer
+    var plotCoords = makePlotPolygon(d.ll[0], d.ll[1]);
+    d.poly = L.polygon(plotCoords, {
+      color: '#0b5d0b',
+      weight: 1.2,
+      fillColor: '#1abc9c',
+      fillOpacity: 0.45,
+      interactive: true
+    }).bindPopup(function() { return cpop(d); }, opt());
+
+    // 2. Create ONT Pin (Dot) inside the green box
+    d.m = L.circleMarker(d.ll, {
+      radius: 4.5,
+      color: '#fff',
+      weight: 0.8,
+      fillColor: ST[d.s][1],
+      fillOpacity: 1
+    }).bindPopup(function() { return cpop(d); }, opt());
+
+    // Both belong to G.cust so they move, appear, and hide together!
+    d.poly.addTo(G.cust);
+    d.m.addTo(G.cust);
+  });
+
+  filt();
+  updateBottomStats();
+  if (!map.hasLayer(G.cust) && eff('cust')) G.cust.addTo(map);
+}
+
+function filt() {
+  CU.forEach(function(d) {
+    var isVisible = sel[d.s];
+    if (isVisible) {
+      if (d.poly && !G.cust.hasLayer(d.poly)) G.cust.addLayer(d.poly);
+      if (d.m && !G.cust.hasLayer(d.m)) G.cust.addLayer(d.m);
+    } else {
+      if (d.poly && G.cust.hasLayer(d.poly)) G.cust.removeLayer(d.poly);
+      if (d.m && G.cust.hasLayer(d.m)) G.cust.removeLayer(d.m);
+    }
+  });
+}
+
+function updateCoordDisplay() {
+  var c = map.getCenter();
+  $('cd').textContent = 'Lat/Lon ' + c.lat.toFixed(6) + ' ' + c.lng.toFixed(6) + ' | Scale 1:' + Math.round(591657550.5 / Math.pow(2, map.getZoom())) + ' | Zoom ' + map.getZoom();
+}
+
+function sm(cls) {
+  return L.divIcon({ className: '', html: '<div class="' + cls + '" style="margin:-5px 0 0 -5px"></div>', iconSize: [0, 0] });
+}
+function pinIc() {
+  return L.divIcon({ className: '', html: '<div class="pin" style="margin:-22px 0 0 -11px"><i></i></div>', iconSize: [0, 0] });
+}
+
+/* =========================================================================
+   BUILD PORTAL (OPSN vs COMMERCIAL)
+   ========================================================================= */
+function build(r) {
+  role = r;
+  ['cu', 'co'].forEach(function(c) {
+    document.querySelectorAll('.' + c).forEach(function(e) { e.style.display = (c === r) ? '' : 'none'; });
+  });
+
+  $('cs').style.display = (r === 'cu') ? '' : 'none';
+  $('pn').style.display = (r === 'cu') ? '' : 'none';
+  $('ll').style.display = (r === 'co') ? 'block' : 'none';
+  $('q').placeholder = (r === 'cu') ? 'Search Vehicle' : 'Search Parcel';
+
+  $('tr').innerHTML = '';
+  on = {}; P = {}; G = {}; Z = {};
+  tree(TREE[r], $('tr'), null);
+
+  if (map) map.remove();
+
+  var esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: 19, attribution: 'Earthstar Geographics'
+  });
+  // Clean Light Minimalist OSM View (CartoDB Positron matching user screenshot)
+  var osm = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+    maxZoom: 19, subdomains: 'abcd', attribution: 'Map data &copy; OpenStreetMap contributors, &copy; CARTO'
+  });
+
+  var B = { sat: esri, osm: osm };
+  map = L.map('map', { center: [31.4285, 73.147], zoom: 15, zoomControl: false, preferCanvas: true, attributionControl: false });
+  L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(map);
+
+  B.sat.addTo(map);
+  $('pe').textContent = 'Powered by Esri';
+
+  document.querySelectorAll('.bo').forEach(function(o) {
+    o.classList.toggle('on', o.dataset.b === 'sat');
+    o.onclick = function() {
+      if (o.dataset.b === 'sat') {
+        map.removeLayer(B.osm);
+        B.sat.addTo(map);
+        $('pe').textContent = 'Powered by Esri';
+      } else {
+        map.removeLayer(B.sat);
+        B.osm.addTo(map);
+        $('pe').textContent = 'OpenStreetMap (Light Vector)';
+      }
+      document.querySelectorAll('.bo').forEach(function(x) { x.classList.toggle('on', x === o); });
+    };
+  });
+
+  map.on('move zoomend', updateCoordDisplay);
+  updateCoordDisplay();
+
+  var all = L.latLngBounds(PL[0]);
+  PL.forEach(function(p) { all.extend(L.latLngBounds(p)); });
+
+  if (r === 'cu') {
+    G.veh = L.layerGroup();
+    G.tasks = L.layerGroup();
+    G.zone = L.layerGroup();
+    ZN.forEach(function(z, i) {
+      L.polygon(z, { color: AR[i].c, weight: 2, fillColor: AR[i].c, fillOpacity: 0.18, interactive: false }).addTo(G.zone);
+    });
+
+    G.cust = L.layerGroup();
+    renderCustomerLayers();
+
+    G.trench = L.layerGroup();
+    CV.forEach(function(c) {
+      L.polyline(c, { color: '#bdbdbd', weight: 2, dashArray: '2 5' }).addTo(G.trench);
+    });
+
+    G.mh = L.layerGroup();
+    JT.forEach(function(p) { L.marker(p, { icon: sm('mh') }).addTo(G.mh); });
+
+    G.back = L.layerGroup();
+    L.polyline([POP[0].p, [POP[1].p[0], POP[0].p[1]], POP[1].p, [POP[2].p[0], POP[1].p[1]], POP[2].p], { color: '#1f3dff', weight: 3.5 }).addTo(G.back);
+
+    G.feeder = L.layerGroup();
+    FD.forEach(function(f) { L.polyline(f, { color: '#ff2d2d', weight: 2.5 }).addTo(G.feeder); });
+
+    G.dist = L.layerGroup();
+    DS.forEach(function(f) { L.polyline(f, { color: '#ffe600', weight: 2 }).addTo(G.dist); });
+
+    G.fat = L.layerGroup();
+    FAT.forEach(function(p) { L.marker(p, { icon: sm('sq') }).bindPopup(gpop('FAT', [['City', 'Islamabad']]), opt()).addTo(G.fat); });
+
+    G.odb = L.layerGroup();
+    ODB.forEach(function(p) { L.marker(p, { icon: sm('dm') }).addTo(G.odb); });
+
+    G.joint = L.layerGroup();
+    JT.forEach(function(p) { L.marker(p, { icon: sm('jt') }).addTo(G.joint); });
+
+    G.pop = L.layerGroup();
+    POP.forEach(function(p) { L.marker(p.p, { icon: pinIc() }).bindPopup(gpop('POP - ' + p.a.nm, [['Zone', p.a.n], ['City', 'Islamabad']]), opt()).addTo(G.pop); });
+
+    filt();
+    sync();
+
+    // CUSTOMER STATUS CHECKBOXES HANDLER (VIDEO 00:44 - 00:55)
+    var dl = $('ddl');
+    dl.querySelectorAll('input').forEach(function(c) {
+      c.onchange = function() {
+        sel[c.dataset.s] = c.checked;
+        $('ld').style.display = 'block';
+        setTimeout(function() {
+          $('ld').style.display = 'none';
+          filt();
+          updateBottomStats();
+        }, 300);
+      };
+    });
+
+    updateBottomStats();
+  } else {
+    // COMMERCIAL VIEW (TFS COVERAGE / PARCELS - VIDEO 02:27 - 02:50)
+    var zk = { North: 'pN', Central: 'pC', South: 'pS' };
+    AR.forEach(function(a, i) {
+      var g = G[zk[a.n]] = L.layerGroup(), bb = null;
+      PL.slice(i * 96, i * 96 + 96).forEach(function(p, n) {
+        var plotNo = '' + (1100 + n * 2);
+        var l = L.polygon(p, {
+          color: '#0b5d0b',
+          weight: 1.2,
+          fillColor: '#39e639',
+          fillOpacity: 0.85
+        }).bindPopup(gpop('TFS Coverage', [
+          ['Zone', a.n],
+          ['Area', a.nm],
+          ['Plot No', plotNo],
+          ['Coverage', 'Covered'],
+          ['Status', 'Active GPON Ready']
+        ]), opt()).addTo(g);
+
+        bb = bb ? bb.extend(l.getBounds()) : l.getBounds();
+      });
+      Z[a.n] = bb;
+    });
+
+    G.cpop = L.layerGroup();
+    POP.forEach(function(p) {
+      L.marker(p.p, { icon: pinIc() }).bindPopup(gpop('POP - ' + p.a.nm, [['Zone', p.a.n], ['City', 'Islamabad']]), opt()).addTo(G.cpop);
+    });
+
+    sync();
+  }
+
+  map.fitBounds(all.pad(0.3));
+
+  // MAP CONTROLS
+  $('zi').onclick = function() { map.zoomIn(); };
+  $('zo').onclick = function() { map.zoomOut(); };
+  $('hm').onclick = function() { map.flyToBounds(all.pad(0.3)); };
+  $('cp').onclick = function() { map.flyToBounds(all.pad(0.3)); };
+  $('r1').onclick = function() { $('pn').style.display = ($('pn').style.display === 'none') ? '' : 'none'; map.invalidateSize(); };
+  $('r2').onclick = function() { $('q').focus(); };
+  $('r3').onclick = function() { $('ddl').classList.toggle('open'); };
+}
+
+/* =========================================================================
+   REAL-TIME SPEED TELEMETRY STREAM (AUDIO INSTRUCTION)
+   ========================================================================= */
+setInterval(function() {
+  var totalMbps = 0;
+  CU.forEach(function(d) {
+    if (!d.up) {
+      d.liveDl = '0.0';
+      d.liveUl = '0.0';
+      return;
+    }
+    // Dynamic Brownian walk bandwidth simulation
+    var jitter = (rnd() - 0.48) * (d.bwVal * 0.12);
+    var newDl = Math.max(1.2, Math.min(d.bwVal, parseFloat(d.liveDl) + jitter));
+    var newUl = Math.max(0.4, Math.min(d.bwVal * 0.3, parseFloat(d.liveUl) + (jitter * 0.3)));
+    d.liveDl = newDl.toFixed(1);
+    d.liveUl = newUl.toFixed(1);
+    totalMbps += newDl;
+  });
+
+  // Update header total throughput ticker
+  var totalGbps = (34.2 + (totalMbps / 1000)).toFixed(2);
+  $('hdr-total-speed').textContent = totalGbps + ' Gbps';
+
+  // If a customer popup is currently open, dynamically update its live meter
+  var openPopupEl = document.querySelector('.leaflet-popup .live-speed-box');
+  if (openPopupEl && map._popup && map._popup._source) {
+    var activeCust = CU.find(function(c) { return c.m === map._popup._source; });
+    if (activeCust && activeCust.up) {
+      var pct = Math.min(100, Math.round((parseFloat(activeCust.liveDl) / activeCust.bwVal) * 100));
+      var readouts = openPopupEl.querySelectorAll('.live-speed-readout b');
+      if (readouts.length >= 2) {
+        readouts[0].textContent = activeCust.liveDl + ' Mbps';
+        readouts[1].textContent = activeCust.liveUl + ' Mbps';
+      }
+      var barFill = openPopupEl.querySelector('.live-bar-fill');
+      if (barFill) barFill.style.width = pct + '%';
+    }
+  }
+}, 1000);
+
+/* =========================================================================
+   ROLE-BASED TASK MANAGEMENT & FIELD DISPATCH SYSTEM STATE
+   ========================================================================= */
+var allTeams = [];
+var allTasks = [];
+var activeUser = {
+  email: 'boss@transworld.com',
+  name: 'Engr. Tariq Mehmood (Boss)',
+  role: 'Boss',
+  designation: 'Head of GIS, Planning & Operations',
+  region: 'All'
+};
+var currentActionTaskId = null;
+
+function isCurrentBoss() {
+  return activeUser.role === 'Boss';
+}
+
+/* =========================================================================
+   LOGIN & ROLE INITIALIZATION (ADMIN VS TEAM MEMBER)
+   ========================================================================= */
+window.doLogin = function(type) {
+  var errEl = $('lerr');
+  if (errEl) errEl.textContent = '';
+
+  var email, password;
+
+  if (type === 'admin') {
+    email = $('admin-user') ? $('admin-user').value.trim() : '';
+    password = $('admin-pass') ? $('admin-pass').value : '';
+    if (!email || !password) {
+      if (errEl) errEl.textContent = 'Please enter administrator username and password';
+      return;
+    }
+  } else {
+    email = $('member-email') ? $('member-email').value.trim() : '';
+    password = $('member-pass') ? $('member-pass').value : '';
+    if (!email || !password) {
+      if (errEl) errEl.textContent = 'Please enter your email and password';
+      return;
+    }
+  }
+
+  var loginPayload = { email: email, password: password };
+  if (type === 'member') {
+    var regSel = $('login-member-region');
+    loginPayload.region = regSel ? regSel.value : '';
+  }
+
+  // Show a loading state on the button
+  var btnEl = type === 'admin' ? $('btn-login-admin') : $('btn-login-member');
+  if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Logging in...'; }
+
+  fetch('/api/login', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(loginPayload)
+  })
+  .then(function(res) { return res.json().then(function(data) { return { ok: res.ok, data: data }; }); })
+  .then(function(result) {
+    if (btnEl) {
+      btnEl.disabled = false;
+      btnEl.textContent = type === 'admin' ? 'Login as Administrator' : 'Login as Field Engineer';
+    }
+    if (!result.ok) {
+      if (errEl) errEl.textContent = result.data.error || 'Login failed';
+      return;
+    }
+    var user = result.data.user;
+    if (type === 'admin' && user.role !== 'Boss') {
+      if (errEl) errEl.textContent = 'Access denied: not an administrator account';
+      return;
+    }
+    if (type === 'member' && user.role === 'Boss') {
+      if (errEl) errEl.textContent = 'Please use the Admin Login tab for this account';
+      return;
+    }
+
+    activeUser = {
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      designation: user.designation || '',
+      region: user.region || 'All'
+    };
+
+    $('login').style.display = 'none';
+    $('loader-overlay').style.display = 'flex';
+
+    loadCustomersFromDB(function() {
+      setTimeout(function() {
+        $('loader-overlay').style.display = 'none';
+        $('app').style.display = 'flex';
+
+        build('cu');
+        configureDashboardForRole();
+        fetchTasksData();
+        fetchTeamsData();
+
+        setTimeout(function() {
+          if (map) {
+            map.invalidateSize();
+            if (activeUser.role === 'Member') {
+              if (activeUser.region === 'North') map.flyTo([31.4357, 73.1549], 16, { duration: 1.2 });
+              else if (activeUser.region === 'Central') map.flyTo([31.4246, 73.1445], 16, { duration: 1.2 });
+              else if (activeUser.region === 'South') map.flyTo([31.4224, 73.1490], 16, { duration: 1.2 });
+            }
+          }
+        }, 150);
+      }, 700);
+    });
+  })
+  .catch(function(err) {
+    if (btnEl) {
+      btnEl.disabled = false;
+      btnEl.textContent = type === 'admin' ? 'Login as Administrator' : 'Login as Field Engineer';
+    }
+    if (errEl) errEl.textContent = 'Network error. Is the server running?';
+  });
+};
+
+function configureDashboardForRole() {
+  var isBoss = isCurrentBoss();
+
+  // 1. Header controls
+  if (isBoss) {
+    if ($('hdr-user-avatar')) {
+      $('hdr-user-avatar').textContent = 'Admin';
+      $('hdr-user-avatar').style.cssText = 'font-size:11px;font-weight:700;background:#238636;color:#fff;padding:2px 8px;border-radius:3px;letter-spacing:0.3px';
+    }
+    if ($('hdr-user-name')) {
+      $('hdr-user-name').textContent = '';
+      $('hdr-user-name').style.display = 'none';
+    }
+    if ($('btn-dispatch-label')) $('btn-dispatch-label').textContent = 'Tasks';
+    if ($('member-workbench-banner')) $('member-workbench-banner').style.display = 'none';
+    if ($('ft-btn-assign-task')) $('ft-btn-assign-task').style.display = 'inline-block';
+  } else {
+    if ($('hdr-user-avatar')) {
+      $('hdr-user-avatar').textContent = 'Field';
+      $('hdr-user-avatar').style.cssText = 'font-size:11px;font-weight:700;background:#1f6feb;color:#fff;padding:2px 8px;border-radius:3px;letter-spacing:0.3px';
+    }
+    if ($('hdr-user-name')) {
+      $('hdr-user-name').textContent = activeUser.name.split(' ')[0] + ' (' + activeUser.region + ')';
+      $('hdr-user-name').style.display = 'inline';
+    }
+    if ($('btn-dispatch-label')) $('btn-dispatch-label').textContent = 'My Tasks';
+    if ($('member-workbench-banner')) {
+      $('member-workbench-banner').style.display = 'flex';
+      $('member-banner-text').innerHTML = '<b>Field Workbench:</b> Welcome <b>' + esc(activeUser.name) + '</b> (' + esc(activeUser.designation) + ' - ' + esc(activeUser.region) + ' Region). Your assigned tasks are ready.';
+    }
+    if ($('ft-btn-assign-task')) $('ft-btn-assign-task').style.display = 'none';
+  }
+
+  // 2. Field Dispatch Drawer controls
+  if ($('current-user-name')) $('current-user-name').textContent = activeUser.name;
+  if (isBoss) {
+    if ($('current-user-avatar')) {
+      $('current-user-avatar').textContent = 'ADM';
+      $('current-user-avatar').style.background = '#f59e0b';
+    }
+    if ($('current-user-desc')) $('current-user-desc').textContent = 'Role: Boss (Admin & Dispatch)';
+    if ($('btn-open-assign-modal')) $('btn-open-assign-modal').style.display = 'flex';
+    if ($('drawer-user-switcher-wrap')) $('drawer-user-switcher-wrap').style.display = 'flex';
+    if ($('tab-btn-approvals')) $('tab-btn-approvals').style.display = 'flex';
+    if ($('filt-task-region')) $('filt-task-region').value = 'All';
+  } else {
+    if ($('current-user-avatar')) {
+      $('current-user-avatar').textContent = activeUser.name.charAt(0);
+      $('current-user-avatar').style.background = '#3b82f6';
+    }
+    if ($('current-user-desc')) $('current-user-desc').textContent = 'Role: Field Team (' + activeUser.email + ')';
+    if ($('btn-open-assign-modal')) $('btn-open-assign-modal').style.display = 'none';
+    if ($('drawer-user-switcher-wrap')) $('drawer-user-switcher-wrap').style.display = 'none';
+    if ($('tab-btn-approvals')) $('tab-btn-approvals').style.display = 'none';
+    if ($('filt-task-region')) $('filt-task-region').value = activeUser.region;
+  }
+
+  if (typeof renderTasksList === 'function') renderTasksList();
+  if (typeof renderApprovalsQueue === 'function') renderApprovalsQueue();
+}
+
+// Attach Login Button Listeners
+if ($('btn-login-admin')) {
+  $('btn-login-admin').onclick = function() { window.doLogin('admin'); };
+}
+if ($('admin-pass')) {
+  $('admin-pass').onkeydown = function(e) { if (e.key === 'Enter') window.doLogin('admin'); };
+}
+if ($('admin-user')) {
+  $('admin-user').onkeydown = function(e) { if (e.key === 'Enter') window.doLogin('admin'); };
+}
+
+if ($('btn-login-member')) {
+  $('btn-login-member').onclick = function() { window.doLogin('member'); };
+}
+if ($('member-pass')) {
+  $('member-pass').onkeydown = function(e) { if (e.key === 'Enter') window.doLogin('member'); };
+}
+
+// Logout Listener
+if ($('lo')) {
+  $('lo').onclick = function() {
+    fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }).catch(function(){});
+    activeUser = null;
+    $('app').style.display = 'none';
+    $('login').style.display = 'flex';
+    if ($('admin-pass')) $('admin-pass').value = '';
+    if ($('member-pass')) $('member-pass').value = '';
+    if ($('lerr')) $('lerr').textContent = '';
+    window.switchLoginRole('admin');
+  };
+}
+
+$('hb').onclick = function() {
+  $('sd').classList.toggle('min');
+  setTimeout(function() { map.invalidateSize(); }, 60);
+};
+
+$('cs').onclick = function(e) {
+  if (!e.target.closest('#ddl')) $('ddl').classList.toggle('open');
+};
+
+$('bgh').onclick = function() {
+  $('bgl').classList.toggle('hide');
+  $('bga').innerHTML = $('bgl').classList.contains('hide') ? '&#8250;' : '&#8964;';
+};
+
+// SEARCH FUNCTION
+function sr() {
+  var v = $('q').value.trim().toLowerCase();
+  if (!v || role !== 'cu') return;
+  var d = CU.filter(function(x) {
+    return x.name.toLowerCase().indexOf(v) > -1 || x.id.indexOf(v) > -1;
+  })[0];
+
+  if (!d) {
+    alert('No result found for: ' + v);
+    return;
+  }
+
+  if (!G.cust.hasLayer(d.m)) G.cust.addLayer(d.m);
+  map.flyTo(d.ll, 19, { duration: 1.2 });
+  setTimeout(function() { d.m.openPopup(); }, 1000);
+}
+
+$('sb').onclick = sr;
+$('q').onkeydown = function(e) { if (e.key === 'Enter') sr(); };
+
+$('llq').onkeydown = function(e) {
+  if (e.key === 'Enter') {
+    var m = this.value.split(',');
+    var a = parseFloat(m[0]), b = parseFloat(m[1]);
+    if (!isNaN(a) && !isNaN(b)) map.flyTo([a, b], 17);
+  }
+};
+
+/* =========================================================================
+   LIVE PGADMIN 4 (POSTGRESQL) SYNC ENGINE
+   ========================================================================= */
+function checkPostgresStatus() {
+  var apiUrl = (window.location.port === '5000') ? '' : 'http://localhost:5000';
+  fetch('/api/db-status')
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.status === 'connected') {
+        $('db-status-val').textContent = 'pgAdmin 4 (' + data.database + ')';
+        $('db-dot').style.background = '#2ecc40';
+        $('db-dot').style.boxShadow = '0 0 6px #2ecc40';
+      }
+    })
+    .catch(function(err) {
+      if ($('db-status-val')) {
+        $('db-status-val').textContent = 'pgAdmin 4 (Standby)';
+        $('db-dot').style.background = '#ff9800';
+        $('db-dot').style.boxShadow = '0 0 6px #ff9800';
+      }
+    });
+}
+checkPostgresStatus();
+loadCustomersFromDB();
+setInterval(checkPostgresStatus, 8000);
+
+// Auto-sync database changes (New customers, moved locations, deleted pins) every 6s
+setInterval(function() {
+  if (role === 'cu') loadCustomersFromDB();
+}, 6000);
+
+// Manual Sync Button Handler
+var syncBtn = $('btn-sync-db');
+if (syncBtn) {
+  syncBtn.onclick = function() {
+    this.style.opacity = '0.6';
+    var icon = $('sync-icon');
+    if (icon) icon.style.transform = 'rotate(360deg)';
+    var self = this;
+    loadCustomersFromDB(function() {
+      self.style.opacity = '1';
+      if (icon) {
+        setTimeout(function() { icon.style.transform = 'none'; }, 500);
+      }
+      if ($('db-status-val')) $('db-status-val').textContent = 'pgAdmin 4 (Synced!)';
+      setTimeout(function() {
+        if ($('db-status-val')) $('db-status-val').textContent = 'pgAdmin 4 (' + CU.length + ' ONTs)';
+      }, 1500);
+    });
+  };
+}
+
+/* =========================================================================
+   ROLE-BASED TASK MANAGEMENT & FIELD DISPATCH SYSTEM ENGINE
+   ========================================================================= */
+
+// Modal Controls
+window.openModal = function(id) {
+  var el = $(id);
+  if (el) el.style.display = 'flex';
+};
+window.closeModal = function(id) {
+  var el = $(id);
+  if (el) el.style.display = 'none';
+};
+
+// Toggle Region Accordions in Team Directory
+window.toggleRegionList = function(reg) {
+  var grid = $('grid-' + reg);
+  var arrow = $('arrow-' + reg);
+  if (!grid) return;
+  if (grid.style.display === 'none') {
+    grid.style.display = 'grid';
+    if (arrow) arrow.innerHTML = '&#9660;';
+  } else {
+    grid.style.display = 'none';
+    if (arrow) arrow.innerHTML = '&#9654;';
+  }
+};
+
+// Check if current user is Boss
+function isCurrentBoss() {
+  return activeUser.role === 'Boss';
+}
+
+// Format Deadline to friendly text & countdown
+function formatDeadline(deadlineStr) {
+  if (!deadlineStr) return '';
+  var due = new Date(deadlineStr);
+  var now = new Date();
+  var diffMs = due - now;
+  var isOverdue = diffMs < 0;
+  var absHours = Math.abs(Math.round(diffMs / (1000 * 60 * 60)));
+  var days = Math.floor(absHours / 24);
+  var hours = absHours % 24;
+
+  var relative = '';
+  if (isOverdue) {
+    relative = 'Overdue by ' + (days > 0 ? days + 'd ' : '') + hours + 'h';
+    return '<span class="tc-deadline overdue">' + relative + ' (' + deadlineStr.slice(5, 16) + ')</span>';
+  } else if (absHours <= 24) {
+    relative = 'Due in ' + hours + 'h';
+    return '<span class="tc-deadline soon">' + relative + ' (' + deadlineStr.slice(5, 16) + ')</span>';
+  } else {
+    relative = 'Due in ' + days + 'd ' + hours + 'h';
+    return '<span class="tc-deadline">' + relative + ' (' + deadlineStr.slice(5, 16) + ')</span>';
+  }
+}
+
+// Get task category badge class
+function getCatClass(type) {
+  if (type === 'Survey Task') return 'survey';
+  if (type === 'BOQ Task') return 'boq';
+  if (type === 'Planning Task') return 'plan';
+  return 'db';
+}
+
+// Get status badge class
+function getStatusClass(st) {
+  if (st === 'In Progress') return 'progress';
+  if (st === 'Submitted for Review') return 'submitted';
+  if (st === 'Accepted') return 'accepted';
+  if (st === 'Rejected') return 'rejected';
+  return 'pending';
+}
+
+// Fetch all Team Members from Database
+function fetchTeamsData() {
+  var apiUrl = (window.location.port === '5000') ? '' : 'http://localhost:5000';
+  fetch('/api/teams', { credentials: 'same-origin' })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (Array.isArray(data)) {
+        allTeams = data;
+        renderTeamsDirectory();
+        populateAssigneeDropdown();
+        populateUserSwitcher();
+        if (typeof window.updateMemberLoginList === 'function') window.updateMemberLoginList();
+      }
+    })
+    .catch(function(err) {
+      console.warn('Could not fetch teams data:', err);
+    });
+}
+
+// Populate Regional Teams Directory (North 25, Central 12, South 10)
+function renderTeamsDirectory() {
+  var northGrid = $('grid-north');
+  var centralGrid = $('grid-central');
+  var southGrid = $('grid-south');
+
+  if (northGrid) northGrid.innerHTML = '';
+  if (centralGrid) centralGrid.innerHTML = '';
+  if (southGrid) southGrid.innerHTML = '';
+
+  allTeams.forEach(function(m) {
+    if (m.role === 'Boss') return; // Boss shown in header
+    var card = document.createElement('div');
+    card.className = 'member-card';
+    card.innerHTML = 
+      '<div class="avatar" style="background:' + (m.avatar_color || '#3b82f6') + ';width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:12px;flex-shrink:0">' +
+        esc(String(m.name).charAt(0)) +
+      '</div>' +
+      '<div class="member-info">' +
+        '<div class="member-name">' + esc(m.name) + '</div>' +
+        '<div class="member-role">' + esc(m.designation) + '</div>' +
+        '<div class="member-email">' + esc(m.email) + ' • ' + (esc(m.phone) || '') + '</div>' +
+      '</div>' +
+      (m.active_tasks > 0 ? '<span style="background:rgba(245,158,11,0.25);color:#fbbf24;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:700" title="Active Tasks">' + m.active_tasks + '</span>' : '');
+
+    if (m.region === 'North' && northGrid) northGrid.appendChild(card);
+    else if (m.region === 'Central' && centralGrid) centralGrid.appendChild(card);
+    else if (m.region === 'South' && southGrid) southGrid.appendChild(card);
+  });
+}
+
+// Populate Assignee Dropdown for Task Creation
+function populateAssigneeDropdown() {
+  var sel = $('task-input-assignee');
+  if (!sel) return;
+  var chosenRegion = $('task-input-region') ? $('task-input-region').value : 'North';
+
+  var filtered = allTeams.filter(function(m) {
+    return m.role !== 'Boss' && m.region === chosenRegion;
+  });
+
+  sel.innerHTML = filtered.map(function(m) {
+    return '<option value="' + esc(m.email) + '">' + esc(m.name) + ' (' + esc(m.designation) + ')</option>';
+  }).join('');
+}
+
+if ($('task-input-region')) {
+  $('task-input-region').onchange = populateAssigneeDropdown;
+}
+
+// Populate Active User Switcher in Drawer
+function populateUserSwitcher() {
+  var sel = $('select-active-user');
+  if (!sel) return;
+
+  var northMembers = allTeams.filter(function(m) { return m.region === 'North' && m.role !== 'Boss'; });
+  var centralMembers = allTeams.filter(function(m) { return m.region === 'Central' && m.role !== 'Boss'; });
+  var southMembers = allTeams.filter(function(m) { return m.region === 'South' && m.role !== 'Boss'; });
+
+  sel.innerHTML = 
+    '<option value="boss@transworld.com" data-role="Boss" data-name="Engr. Tariq Mehmood (Boss)">Boss (Admin / Dispatch)</option>' +
+    '<optgroup label="North Team (' + northMembers.length + ' Members)">' +
+      northMembers.map(function(m) {
+        return '<option value="' + esc(m.email) + '" data-role="Member" data-name="' + esc(m.name) + '">' + esc(m.name) + ' (' + esc(m.designation) + ')</option>';
+      }).join('') +
+    '</optgroup>' +
+    '<optgroup label="Central Team (' + centralMembers.length + ' Members)">' +
+      centralMembers.map(function(m) {
+        return '<option value="' + esc(m.email) + '" data-role="Member" data-name="' + esc(m.name) + '">' + esc(m.name) + ' (' + esc(m.designation) + ')</option>';
+      }).join('') +
+    '</optgroup>' +
+    '<optgroup label="South Team (' + southMembers.length + ' Members)">' +
+      southMembers.map(function(m) {
+        return '<option value="' + esc(m.email) + '" data-role="Member" data-name="' + esc(m.name) + '">' + esc(m.name) + ' (' + esc(m.designation) + ')</option>';
+      }).join('') +
+    '</optgroup>';
+
+  sel.value = activeUser.email;
+}
+
+// Active User Switcher Event
+if ($('select-active-user')) {
+  $('select-active-user').onchange = function() {
+    var opt = this.options[this.selectedIndex];
+    activeUser = {
+      email: this.value,
+      name: opt.getAttribute('data-name'),
+      role: opt.getAttribute('data-role')
+    };
+
+    $('current-user-name').textContent = activeUser.name;
+    if (activeUser.role === 'Boss') {
+      $('current-user-avatar').textContent = 'ADM';
+      $('current-user-avatar').style.background = '#f59e0b';
+      $('current-user-desc').textContent = 'Role: Boss (Admin & Dispatch)';
+      if ($('btn-open-assign-modal')) $('btn-open-assign-modal').style.display = 'flex';
+    } else {
+      $('current-user-avatar').textContent = activeUser.name.charAt(0);
+      $('current-user-avatar').style.background = '#3b82f6';
+      $('current-user-desc').textContent = 'Role: Field Team (' + activeUser.email + ')';
+      if ($('btn-open-assign-modal')) $('btn-open-assign-modal').style.display = 'none';
+    }
+
+    renderTasksList();
+    renderApprovalsQueue();
+  };
+}
+
+// Fetch all Field Tasks
+function fetchTasksData() {
+  var apiUrl = (window.location.port === '5000') ? '' : 'http://localhost:5000';
+  fetch('/api/tasks', { credentials: 'same-origin' })
+    .then(function(res) { return res.json(); })
+    .then(function(tasks) {
+      if (Array.isArray(tasks)) {
+        allTasks = tasks;
+        renderTasksList();
+        renderApprovalsQueue();
+        renderMapTaskPins();
+
+        var isTyping = document.activeElement && 
+          (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
+
+        if (typeof renderFieldTasksTable === 'function') {
+          if (!isTyping || document.activeElement.id !== 'ft-admin-feedback') {
+            renderFieldTasksTable();
+          }
+        }
+        if (typeof renderMemberTasksView === 'function') {
+          if (!isTyping || document.activeElement.id !== 'mt-sub-notes') {
+            renderMemberTasksView();
+          }
+        }
+      }
+    })
+    .catch(function(err) {
+      console.warn('Could not fetch tasks:', err);
+    });
+}
+
+// Render Task Cards List
+function renderTasksList() {
+  var container = $('task-cards-container');
+  if (!container) return;
+
+  var isBoss = isCurrentBoss();
+  var regionFilt = $('filt-task-region') ? $('filt-task-region').value : 'All';
+  var typeFilt = $('filt-task-type') ? $('filt-task-type').value : 'All';
+  var statusFilt = $('filt-task-status') ? $('filt-task-status').value : 'All';
+
+  var filtered = allTasks.filter(function(t) {
+    if (!isBoss && t.assigned_to !== activeUser.email) return false;
+    if (regionFilt !== 'All' && t.region !== regionFilt) return false;
+    if (typeFilt !== 'All' && t.task_type !== typeFilt) return false;
+    if (statusFilt !== 'All' && t.status !== statusFilt) return false;
+    return true;
+  });
+
+  if ($('count-tasks-tab')) $('count-tasks-tab').textContent = filtered.length;
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:24px;color:#8b949e;font-size:12px">No field dispatch tasks match the selected criteria.</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(function(t) {
+    var isAssignedToMe = (esc(t.assigned_to) === esc(activeUser.email));
+    var isBoss = isCurrentBoss();
+
+    // Action buttons based on status & role
+    var actionsHtml = '';
+
+    // Member actions
+    if (!isBoss && isAssignedToMe) {
+      if (esc(t.status) === 'Pending') {
+        actionsHtml += '<button class="btn-action start" onclick="startTask(' + t.task_id + ')">Start Task</button>';
+      } else if (esc(t.status) === 'In Progress') {
+        actionsHtml += '<button class="btn-action submit" onclick="openSubmitModal(' + t.task_id + ')">Submit Report</button>';
+      } else if (esc(t.status) === 'Submitted for Review') {
+        actionsHtml += '<span style="font-size:11px;color:#c084fc;font-weight:600">Awaiting Boss Approval</span>';
+      } else if (esc(t.status) === 'Rejected') {
+        actionsHtml += '<button class="btn-action submit" style="background:#e65100;font-weight:700" onclick="openSubmitModal(' + t.task_id + ')">Update & Re-Submit</button>';
+        actionsHtml += '<button class="btn-action start" onclick="startTask(' + t.task_id + ')">Resume Work</button>';
+      }
+    }
+
+    // Boss actions
+    if (isBoss && esc(t.status) === 'Submitted for Review') {
+      actionsHtml += '<button class="btn-action review" onclick="openReviewModal(' + t.task_id + ')">Review & Decide</button>';
+    }
+
+    // Zoom on map button
+    if (t.lat && t.lng) {
+      actionsHtml += '<button class="btn-action view-map" onclick="zoomToTask(' + t.lat + ',' + t.lng + ',\'' + esc(t.task_code) + '\')">View on Map</button>';
+    }
+
+    var catClass = getCatClass(esc(t.task_type));
+    var statusClass = getStatusClass(esc(t.status));
+    var priorityClass = esc(t.priority).toLowerCase();
+    var assignedPill = isAssignedToMe ? '<span style="background:rgba(16,185,129,0.22);color:#34d399;font-size:10px;padding:2px 6px;border-radius:10px;font-weight:700">Assigned to You</span>' : '';
+
+    return '' +
+      '<div class="task-card cat-' + catClass + '"' + (isAssignedToMe ? ' style="border-left-color:#10b981;box-shadow:0 0 12px rgba(16,185,129,0.18)"' : '') + '>' +
+        '<div class="tc-top">' +
+          '<span class="tc-code">' + esc(t.task_code) + ' • ' + esc(t.region) + '</span>' +
+          '<div class="tc-badges">' +
+            assignedPill +
+            '<span class="badge-type ' + catClass + '">' + esc(t.task_type) + '</span>' +
+            '<span class="badge-priority ' + priorityClass + '">' + esc(t.priority) + '</span>' +
+            '<span class="badge-status ' + statusClass + '">' + esc(t.status) + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="tc-title">' + esc(t.title) + '</div>' +
+        (esc(t.description) ? '<div class="tc-desc">' + esc(t.description) + '</div>' : '') +
+        (esc(t.area_name) ? '<div style="font-size:11px;color:#79c0ff;display:flex;align-items:center;gap:4px">Area: ' + esc(t.area_name) + '</div>' : '') +
+        (esc(t.report_filename) ? '<div style="font-size:11px;color:#58a6ff;background:rgba(31,111,235,0.15);padding:3px 8px;border-radius:4px">Attached: ' + esc(t.report_filename) + '</div>' : '') +
+        (esc(t.boss_feedback) ? '<div style="font-size:11px;color:' + (esc(t.status) === 'Rejected' ? '#ff7b72' : '#fbbf24') + ';background:' + (esc(t.status) === 'Rejected' ? 'rgba(218,54,51,0.18)' : 'rgba(245,158,11,0.12)') + ';padding:5px 8px;border-radius:4px;border:1px solid ' + (esc(t.status) === 'Rejected' ? 'rgba(218,54,51,0.4)' : 'rgba(245,158,11,0.3)') + '"><b>' + (esc(t.status) === 'Rejected' ? 'Rejection Remarks:' : 'Boss Feedback:') + '</b> ' + esc(t.boss_feedback) + '</div>' : '') +
+        '<div class="tc-meta">' +
+          '<div class="tc-assignee">' +
+            '<div class="avatar" style="background:' + (t.avatar_color || '#3b82f6') + ';width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:700">' +
+              (esc(t.assignee_name) ? esc(String(t.assignee_name).charAt(0)) : 'U') +
+            '</div>' +
+            '<span>' + (esc(t.assignee_name) || esc(t.assigned_to)) + '</span>' +
+          '</div>' +
+          formatDeadline(t.deadline_str) +
+        '</div>' +
+        (actionsHtml ? '<div class="tc-actions">' + actionsHtml + '</div>' : '') +
+      '</div>';
+  }).join('');
+}
+
+// Render Boss Approvals Queue (Tab 3)
+function renderApprovalsQueue() {
+  var container = $('approval-cards-container');
+  var badge = $('badge-pending-tasks');
+  var tabCount = $('count-approvals-tab');
+
+  var pendingApprovals = allTasks.filter(function(t) {
+    return t.status === 'Submitted for Review';
+  });
+
+  if (badge) {
+    if (isCurrentBoss()) {
+      badge.textContent = pendingApprovals.length;
+      badge.style.display = pendingApprovals.length > 0 ? 'inline-block' : 'none';
+      badge.style.background = '#e11d48';
+    } else {
+      var myTasks = allTasks.filter(function(t) {
+        return t.assigned_to === activeUser.email && (t.status === 'Pending' || t.status === 'In Progress');
+      });
+      badge.textContent = myTasks.length;
+      badge.style.display = myTasks.length > 0 ? 'inline-block' : 'none';
+      badge.style.background = '#10b981';
+    }
+  }
+  if (tabCount) tabCount.textContent = pendingApprovals.length;
+
+  if (!container) return;
+
+  if (pendingApprovals.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:24px;color:#8b949e;font-size:12px">No tasks awaiting Boss approval. All submissions are up to date!</div>';
+    return;
+  }
+
+  container.innerHTML = pendingApprovals.map(function(t) {
+    return '' +
+      '<div class="task-card cat-plan" style="border-left-color:#8b5cf6">' +
+        '<div class="tc-top">' +
+          '<span class="tc-code">' + esc(t.task_code) + ' • ' + esc(t.region) + '</span>' +
+          '<span class="badge-status submitted">Submitted for Review</span>' +
+        '</div>' +
+        '<div class="tc-title">' + esc(t.title) + '</div>' +
+        '<div style="font-size:11.5px;color:#c9d1d9"><b>Assignee:</b> ' + (esc(t.assignee_name) || esc(t.assigned_to)) + ' (' + (t.assignee_designation || '') + ')</div>' +
+        '<div style="background:#161b22;border:1px solid #30363d;padding:8px 10px;border-radius:4px;margin:4px 0">' +
+          '<div style="font-size:10.5px;color:#8b949e;font-weight:700">SUBMISSION NOTES:</div>' +
+          '<div style="font-size:11.5px;color:#fff">' + (esc(t.submission_notes) || 'Task work finished.') + '</div>' +
+          (esc(t.report_filename) ? '<div style="font-size:11px;color:#58a6ff;margin-top:4px">Document: ' + esc(t.report_filename) + '</div>' : '') +
+        '</div>' +
+        '<div class="tc-actions" style="margin-top:6px">' +
+          '<button class="btn-action review" onclick="openReviewModal(' + t.task_id + ')">Review & Decide</button>' +
+          (t.lat && t.lng ? '<button class="btn-action view-map" onclick="zoomToTask(' + t.lat + ',' + t.lng + ',\'' + esc(t.task_code) + '\')">View on Map</button>' : '') +
+        '</div>' +
+      '</div>';
+  }).join('');
+}
+
+// Render Task Pins on Leaflet Map
+function renderMapTaskPins() {
+  if (!map || !G.tasks) return;
+  G.tasks.clearLayers();
+
+  var iconTypeMap = {
+    'Survey Task': 'SRV',
+    'BOQ Task': 'BOQ',
+    'Planning Task': 'PLN',
+    'Database Task': 'DB'
+  };
+
+  allTasks.forEach(function(t) {
+    if (!t.lat || !t.lng) return;
+
+    var statusCls = 'pending';
+    if (esc(t.status) === 'In Progress') statusCls = 'progress';
+    else if (esc(t.status) === 'Submitted for Review') statusCls = 'submitted';
+    else if (esc(t.status) === 'Accepted') statusCls = 'accepted';
+
+    var pinIcon = L.divIcon({
+      className: '',
+      html: '<div class="task-map-pin ' + statusCls + '" title="' + esc(t.task_code) + ': ' + esc(t.title) + '" style="font-size:9.5px;font-weight:800;letter-spacing:0.5px;color:#fff;display:flex;align-items:center;justify-content:center">' +
+              (iconTypeMap[esc(t.task_type)] || 'TSK') +
+            '</div>',
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
+    });
+
+    var marker = L.marker([t.lat, t.lng], { icon: pinIcon });
+
+    var popupHtml = '' +
+      '<div class="pp">' +
+        '<div class="pt">' +
+          '<b>' + esc(t.task_code) + ' - ' + esc(t.task_type) + '</b>' +
+          '<i onclick="map.closePopup()">&#10005;</i>' +
+        '</div>' +
+        '<div class="fl ' + (esc(t.status) === 'Accepted' ? 'up' : 'dn') + '" style="font-size:12px;font-weight:700">' +
+          esc(t.status).toUpperCase() + ' • ' + esc(t.priority) + ' Priority' +
+        '</div>' +
+        '<div class="sc"><table>' +
+          row('Title', t.title) +
+          row('Region', t.region) +
+          row('Area', t.area_name || 'N/A') +
+          row('Assignee', t.assignee_name || t.assigned_to) +
+          row('Deadline', t.deadline_str) +
+          (esc(t.report_filename) ? row('Attached Report', t.report_filename) : '') +
+        '</table></div>' +
+        '<div class="zt" onclick="openDispatchDrawerTab(\'tab-tasks\')">Open in Task Manager</div>' +
+      '</div>';
+
+    marker.bindPopup(popupHtml, opt());
+    marker.addTo(G.tasks);
+  });
+
+  if (!map.hasLayer(G.tasks) && eff('tasks')) {
+    G.tasks.addTo(map);
+  }
+}
+
+// Zoom map to task location
+window.zoomToTask = function(lat, lng, code) {
+  if (!map) return;
+  map.flyTo([lat, lng], 18, { duration: 1.2 });
+  // Find marker and open popup
+  if (G.tasks) {
+    G.tasks.eachLayer(function(l) {
+      if (Math.abs(l.getLatLng().lat - lat) < 0.0001 && Math.abs(l.getLatLng().lng - lng) < 0.0001) {
+        setTimeout(function() { l.openPopup(); }, 800);
+      }
+    });
+  }
+};
+
+// Start Task Action (Member)
+window.startTask = function(taskId) {
+  var apiUrl = (window.location.port === '5000') ? '' : 'http://localhost:5000';
+  fetch('/api/tasks/update-status', { method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ task_id: taskId, status: 'In Progress' })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    fetchTasksData();
+  })
+  .catch(function(e) { alert('Error updating task: ' + e); });
+};
+
+// Open Submission Modal (Member)
+window.openSubmitModal = function(taskId) {
+  currentActionTaskId = taskId;
+  var t = allTasks.find(function(x) { return x.task_id === taskId; });
+  if (!t) return;
+
+  var isRejection = (t.status === 'Rejected');
+  var infoEl = $('submit-modal-task-info');
+  if (infoEl) {
+    var rejHtml = isRejection ? (
+      '<div style="background:rgba(218,54,51,0.15);border:1px solid rgba(218,54,51,0.4);color:#ff7b72;padding:8px 10px;border-radius:4px;margin-bottom:8px;font-size:11.5px">' +
+        '<b>REJECTION REMARKS FROM BOSS:</b><br>' + (t.boss_feedback || 'Revision requested.') +
+      '</div>'
+    ) : '';
+    infoEl.innerHTML = rejHtml + '<b>' + esc(t.task_code) + ': ' + esc(t.title) + '</b><br><span style="color:#8b949e">' + esc(t.task_type) + ' | ' + esc(t.region) + ' | Area: ' + (esc(t.area_name) || 'N/A') + '</span>';
+  }
+
+  var modalTitle = document.querySelector('#modal-submit-task .modal-header h3');
+  if (modalTitle) modalTitle.textContent = isRejection ? 'Re-Submit Task Completion Report' : 'Submit Task Completion Report';
+
+  var btnSubmit = $('btn-confirm-submit-task');
+  if (btnSubmit) btnSubmit.textContent = isRejection ? 'Re-Submit for Boss Approval' : 'Submit for Boss Approval';
+
+  if ($('submit-input-notes')) {
+    $('submit-input-notes').value = isRejection
+      ? (t.submission_notes ? t.submission_notes + '\n\n[Updated Submission Notes]: ' : '')
+      : (t.submission_notes || '');
+  }
+  if ($('submit-input-report-name')) {
+    $('submit-input-report-name').value = t.report_filename || ('survey_report_' + t.task_code.toLowerCase() + '_v2.pdf');
+  }
+
+  openModal('modal-submit-task');
+};
+
+// Confirm Task Submission (Member)
+if ($('btn-confirm-submit-task')) {
+  $('btn-confirm-submit-task').onclick = function() {
+    var notes = $('submit-input-notes') ? $('submit-input-notes').value.trim() : '';
+    var reportName = $('submit-input-report-name') ? $('submit-input-report-name').value.trim() : '';
+
+    if (!notes) {
+      alert('Please enter survey findings or completion notes.');
+      return;
+    }
+
+    var apiUrl = (window.location.port === '5000') ? '' : 'http://localhost:5000';
+    fetch('/api/tasks/update-status', { method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        task_id: currentActionTaskId,
+        status: 'Submitted for Review',
+        submission_notes: notes,
+        report_filename: reportName
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      closeModal('modal-submit-task');
+      fetchTasksData();
+      alert('Task successfully submitted to Boss for review!');
+    })
+    .catch(function(e) { alert('Error submitting task: ' + e); });
+  };
+}
+
+// Open Boss Review Modal
+window.openReviewModal = function(taskId) {
+  currentActionTaskId = taskId;
+  var t = allTasks.find(function(x) { return x.task_id === taskId; });
+  if (!t) return;
+
+  var infoEl = $('review-modal-task-info');
+  if (infoEl) {
+    infoEl.innerHTML = '<b>' + esc(t.task_code) + ': ' + esc(t.title) + '</b><br><span style="color:#8b949e">' + esc(t.task_type) + ' | Submitted by: ' + (esc(t.assignee_name) || esc(t.assigned_to)) + '</span>';
+  }
+  if ($('review-modal-notes')) $('review-modal-notes').textContent = t.submission_notes || 'Work completed per instructions.';
+  if ($('review-modal-report-link')) $('review-modal-report-link').textContent = t.report_filename ? 'Report: ' + t.report_filename : 'No document attached';
+  if ($('review-input-feedback')) $('review-input-feedback').value = '';
+
+  openModal('modal-review-task');
+};
+
+// Boss Decision: Accept & Approve
+if ($('btn-accept-task')) {
+  $('btn-accept-task').onclick = function() {
+    sendBossReviewDecision('Accepted');
+  };
+}
+
+// Boss Decision: Reject & Re-assign
+if ($('btn-reject-task')) {
+  $('btn-reject-task').onclick = function() {
+    sendBossReviewDecision('Rejected');
+  };
+}
+
+function sendBossReviewDecision(decision) {
+  var feedback = $('review-input-feedback') ? $('review-input-feedback').value.trim() : '';
+
+  var apiUrl = (window.location.port === '5000') ? '' : 'http://localhost:5000';
+  fetch('/api/tasks/review', { method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      task_id: currentActionTaskId,
+      decision: decision,
+      boss_feedback: feedback || (decision === 'Accepted' ? 'Approved by Boss.' : 'Requires rework.')
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    closeModal('modal-review-task');
+    fetchTasksData();
+    alert('Task decision recorded: ' + decision);
+  })
+  .catch(function(e) { alert('Error recording decision: ' + e); });
+}
+
+// Open Dispatch Drawer Tab
+window.openDispatchDrawerTab = function(tabId) {
+  if ($('dispatch-drawer')) $('dispatch-drawer').classList.add('open');
+  document.querySelectorAll('.dd-tab').forEach(function(t) {
+    t.classList.toggle('active', t.getAttribute('data-tab') === tabId);
+  });
+  document.querySelectorAll('.tab-pane').forEach(function(p) {
+    p.style.display = (p.id === tabId) ? 'block' : 'none';
+  });
+};
+
+// Open Tasks View & Drawer Toggle
+if ($('btn-toggle-dispatch')) {
+  $('btn-toggle-dispatch').onclick = function() {
+    if (isCurrentBoss()) {
+      window.openFieldTasksView();
+    } else {
+      window.openMemberTasksView();
+    }
+  };
+}
+if ($('member-workbench-banner')) {
+  $('member-workbench-banner').style.cursor = 'pointer';
+  $('member-workbench-banner').onclick = function() {
+    window.openMemberTasksView();
+  };
+}
+if ($('btn-close-dispatch')) {
+  $('btn-close-dispatch').onclick = function() {
+    if ($('dispatch-drawer')) $('dispatch-drawer').classList.remove('open');
+  };
+}
+
+/* =========================================================================
+   DEDICATED FULL-PAGE FIELD TASKS CONTROLLER (MATCHING SCREENSHOT)
+   ========================================================================= */
+var selectedFieldTaskId = null;
+
+window.openFieldTasksView = function(taskId) {
+  var v = $('field-tasks-view');
+  if (!v) return;
+  v.classList.add('active');
+
+  // Configure for role
+  var isBoss = isCurrentBoss();
+  if ($('ft-btn-assign-task')) {
+    $('ft-btn-assign-task').style.display = isBoss ? 'inline-block' : 'none';
+  }
+
+  if (taskId) {
+    selectedFieldTaskId = taskId;
+  }
+  renderFieldTasksTable();
+};
+
+window.closeFieldTasksView = function() {
+  var v = $('field-tasks-view');
+  if (v) v.classList.remove('active');
+  if (map) setTimeout(function() { map.invalidateSize(); }, 150);
+};
+
+window.setTaskStatusFilter = function(statusVal) {
+  var sel = $('ft-sel-status');
+  if (sel) {
+    sel.value = statusVal;
+    renderFieldTasksTable();
+  }
+};
+
+window.filterFieldTasks = function(filterMode) {
+  document.querySelectorAll('.ft-nav-item').forEach(function(el) {
+    el.classList.remove('active');
+  });
+  if (filterMode === 'review') {
+    if ($('ft-nav-approvals')) $('ft-nav-approvals').classList.add('active');
+    window.setTaskStatusFilter('Submitted for Review');
+  } else {
+    if ($('ft-nav-tasks')) $('ft-nav-tasks').classList.add('active');
+    var s = $('ft-sel-status'); if (s) s.value = 'All';
+    var r = $('ft-sel-region'); if (r) r.value = 'All';
+    var t = $('ft-sel-type'); if (t) t.value = 'All';
+    renderFieldTasksTable();
+  }
+};
+
+window.downloadAuditReport = function() {
+  var a = document.createElement('a');
+  a.href = '/audit_report_olt5.csv';
+  a.download = 'audit_report_olt5.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+};
+
+window.openRegionalTeamsModal = function() {
+  openDispatchDrawerTab('tab-teams');
+};
+
+window.openAssignTaskModalFromView = function() {
+  if (!isCurrentBoss()) {
+    alert("Only Administrator can dispatch new tasks.");
+    return;
+  }
+  if (typeof populateAssigneeDropdown === 'function') populateAssigneeDropdown();
+  var d = new Date(); d.setDate(d.getDate() + 2);
+  if ($('task-input-deadline')) $('task-input-deadline').value = d.toISOString().slice(0, 16);
+  if (map && $('task-input-lat') && $('task-input-lng')) {
+    var c = map.getCenter();
+    $('task-input-lat').value = c.lat.toFixed(6);
+    $('task-input-lng').value = c.lng.toFixed(6);
+  }
+  openModal('modal-assign-task');
+};
+
+window.renderFieldTasksTable = function() {
+  var tbody = $('ft-table-tbody');
+  if (!tbody) return;
+
+  var regVal = $('ft-sel-region') ? $('ft-sel-region').value : 'All';
+  var typeVal = $('ft-sel-type') ? $('ft-sel-type').value : 'All';
+  var statusVal = $('ft-sel-status') ? $('ft-sel-status').value : 'All';
+
+  // KPI counters calculation across allTasks
+  var pendingCount = 0, progressCount = 0, reviewCount = 0, acceptedCount = 0;
+  allTasks.forEach(function(t) {
+    if (t.status === 'Pending') pendingCount++;
+    else if (t.status === 'In Progress') progressCount++;
+    else if (t.status === 'Submitted for Review') reviewCount++;
+    else if (t.status === 'Accepted') acceptedCount++;
+  });
+
+  if ($('ft-val-pending')) $('ft-val-pending').textContent = pendingCount;
+  if ($('ft-val-progress')) $('ft-val-progress').textContent = progressCount;
+  if ($('ft-val-review')) $('ft-val-review').textContent = reviewCount;
+  if ($('ft-val-accepted')) $('ft-val-accepted').textContent = acceptedCount;
+
+  // Filter tasks for table
+  var filtered = allTasks.filter(function(t) {
+    if (regVal !== 'All' && t.region !== regVal) return false;
+    if (typeVal !== 'All' && !t.task_type.includes(typeVal)) return false;
+    if (statusVal !== 'All' && t.status !== statusVal) return false;
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:#8b949e">No tasks match selected filters.</td></tr>';
+    renderFieldTaskDetail(null);
+    return;
+  }
+
+  // Selected task selection
+  var currentSelected = filtered.find(function(t) { return t.task_id === selectedFieldTaskId; });
+  if (!currentSelected) {
+    var def = filtered.find(function(t) { return esc(t.task_code) === 'TSK-NOR-0103'; }) || filtered[0];
+    selectedFieldTaskId = def.task_id;
+    currentSelected = def;
+  }
+
+  var html = '';
+  filtered.forEach(function(t) {
+    var isSel = (t.task_id === selectedFieldTaskId);
+
+    // Type short label
+    var typeShort = esc(t.task_type).replace(' Task', '');
+
+    // Assignee name
+    var assigneeShort = esc(t.assignee_name) || (esc(t.assigned_to) ? esc(t.assigned_to).split('@')[0] : 'Unassigned');
+    if (esc(t.assignee_name)) {
+      var parts = esc(t.assignee_name).split(' ');
+      assigneeShort = parts.length > 2 ? parts[0] + ' ' + parts[1] : esc(t.assignee_name);
+    }
+
+    // Priority dot color
+    var pColor = '#58a6ff';
+    if (esc(t.priority) === 'Critical') pColor = '#f85149';
+    else if (esc(t.priority) === 'High') pColor = '#d29922';
+    else if (esc(t.priority) === 'Low') pColor = '#8b949e';
+
+    // Status dot color & label
+    var sColor = '#8b949e';
+    var sLabel = esc(t.status);
+    if (esc(t.status) === 'Submitted for Review') {
+      sColor = '#d29922';
+      sLabel = 'In review';
+    } else if (esc(t.status) === 'In Progress') {
+      sColor = '#58a6ff';
+      sLabel = 'In progress';
+    } else if (esc(t.status) === 'Accepted') {
+      sColor = '#2ea043';
+      sLabel = 'Accepted';
+    } else if (esc(t.status) === 'Rejected') {
+      sColor = '#f85149';
+      sLabel = 'Rejected';
+    } else if (esc(t.status) === 'Pending') {
+      sColor = '#8b949e';
+      sLabel = 'Pending';
+    }
+
+    // Due string
+    var dueStr = '2 days';
+    if (esc(t.status) === 'Submitted for Review') dueStr = 'Submitted';
+    else if (esc(t.status) === 'Accepted') dueStr = 'Done';
+    else if (esc(t.task_code) === 'TSK-CEN-0301') dueStr = '14 hours';
+    else if (esc(t.task_code) === 'TSK-NOR-0102') dueStr = '1 day';
+    else if (esc(t.task_code) === 'TSK-SOU-0201') dueStr = '3 days';
+
+    html += '<tr class="' + (isSel ? 'selected' : '') + '" onclick="selectFieldTask(' + t.task_id + ')">' +
+      '<td>' +
+        '<div style="font-family:Consolas,monospace;font-size:10.5px;color:#8b949e;letter-spacing:0.3px">' + esc(t.task_code) + '</div>' +
+        '<div style="font-size:13px;font-weight:600;color:#ffffff;margin-top:2px">' + esc(t.title) + '</div>' +
+      '</td>' +
+      '<td>' + typeShort + '</td>' +
+      '<td>' + assigneeShort + '</td>' +
+      '<td><span style="color:' + pColor + ';margin-right:4px">&#8226;</span> <span style="color:#c9d1d9">' + esc(t.priority) + '</span></td>' +
+      '<td><span style="color:' + sColor + ';margin-right:4px">&#8226;</span> <span style="color:#c9d1d9">' + sLabel + '</span></td>' +
+      '<td style="color:#8b949e">' + dueStr + '</td>' +
+    '</tr>';
+  });
+
+  tbody.innerHTML = html;
+  renderFieldTaskDetail(currentSelected);
+};
+
+window.selectFieldTask = function(taskId) {
+  selectedFieldTaskId = taskId;
+  renderFieldTasksTable();
+};
+
+window.renderFieldTaskDetail = function(t) {
+  var p = $('ft-review-panel');
+  if (!p) return;
+  if (!t) {
+    p.innerHTML = '<div style="color:#8b949e;font-size:12px;text-align:center;padding:40px 0">Select a task from the list to view details and review.</div>';
+    return;
+  }
+
+  var isBoss = isCurrentBoss();
+  var isAssignedToMe = (t.assigned_to === activeUser.email);
+
+  // Status display
+  var statusColor = '#8b949e';
+  var statusText = t.status;
+  if (t.status === 'Submitted for Review') {
+    statusColor = '#d29922';
+    statusText = 'Submitted for review';
+  } else if (t.status === 'Accepted') {
+    statusColor = '#2ea043';
+    statusText = 'Accepted';
+  } else if (t.status === 'Rejected') {
+    statusColor = '#f85149';
+    statusText = 'Rejected';
+  } else if (t.status === 'In Progress') {
+    statusColor = '#58a6ff';
+    statusText = 'In Progress';
+  }
+
+  var submissionNotes = t.submission_notes || '149 subscriber records aligned with OLT-5, slot 1/2.';
+  var attachmentFile = t.report_filename || 'audit_report_olt5.csv';
+
+  var actionsHtml = '';
+
+  if (isBoss) {
+    if (t.status === 'Submitted for Review') {
+      actionsHtml = '' +
+        '<div style="font-size:11px;font-weight:600;color:#8b949e;margin-bottom:6px">Feedback (optional)</div>' +
+        '<textarea id="ft-admin-feedback" placeholder="Feedback (optional)" style="width:100%;min-height:75px;background:#080c13;border:1px solid #1c2636;border-radius:6px;color:#c9d1d9;padding:8px 10px;font-size:12px;margin-bottom:16px;resize:vertical;outline:none;box-sizing:border-box"></textarea>' +
+        '<div style="display:flex;gap:12px">' +
+          '<button onclick="executeFieldReview(' + t.task_id + ', \'Accepted\')" style="flex:1;background:#2ea043;color:#ffffff;border:none;border-radius:6px;padding:10px;font-weight:600;font-size:13.5px;cursor:pointer">Accept</button>' +
+          '<button onclick="executeFieldReview(' + t.task_id + ', \'Rejected\')" style="flex:1;background:transparent;color:#f85149;border:1px solid #da3633;border-radius:6px;padding:10px;font-weight:600;font-size:13.5px;cursor:pointer">Reject</button>' +
+        '</div>';
+    } else if (t.status === 'Accepted') {
+      actionsHtml = '<div style="background:rgba(46,160,67,0.12);border:1px solid rgba(46,160,67,0.3);color:#3fb950;padding:12px;border-radius:6px;text-align:center;font-size:13px;font-weight:600">Task Accepted by Administration</div>';
+    } else if (t.status === 'Rejected') {
+      actionsHtml = '<div style="background:rgba(218,54,51,0.12);border:1px solid rgba(218,54,51,0.3);color:#f85149;padding:12px;border-radius:6px;font-size:12px"><b>Rejection Feedback Sent:</b> ' + (t.boss_feedback || 'Revision needed.') + '</div>';
+    } else {
+      actionsHtml = '<div style="font-size:12px;color:#8b949e;padding:10px 0;line-height:1.5">Task assigned to <b>' + (t.assignee_name || t.assigned_to) + '</b>. Awaiting field survey submission.</div>';
+    }
+  } else {
+    // Team member view
+    if (t.status === 'Submitted for Review') {
+      actionsHtml = '<div style="background:rgba(210,153,34,0.12);border:1px solid rgba(210,153,34,0.3);color:#d29922;padding:12px;border-radius:6px;text-align:center;font-size:12.5px;font-weight:600">Report submitted. Awaiting administration review.</div>';
+    } else if (t.status === 'Accepted') {
+      actionsHtml = '<div style="background:rgba(46,160,67,0.12);border:1px solid rgba(46,160,67,0.3);color:#3fb950;padding:12px;border-radius:6px;text-align:center;font-size:13px;font-weight:600">Congratulations! Task accepted by Administration.</div>';
+    } else if (t.status === 'Rejected') {
+      actionsHtml = '' +
+        '<div style="background:rgba(218,54,51,0.15);border:1px solid rgba(218,54,51,0.3);color:#f85149;padding:10px;border-radius:6px;font-size:12px;margin-bottom:12px"><b>Admin Rejection:</b> ' + (t.boss_feedback || 'Please update report and resubmit.') + '</div>' +
+        '<div style="font-size:11px;font-weight:600;color:#8b949e;margin-bottom:6px">Updated Submission Notes</div>' +
+        '<textarea id="ft-member-resubmit-notes" placeholder="Explain updates or corrections made..." style="width:100%;min-height:65px;background:#080c13;border:1px solid #1c2636;border-radius:6px;color:#c9d1d9;padding:8px 10px;font-size:12px;margin-bottom:12px;resize:vertical;outline:none;box-sizing:border-box">' + (t.submission_notes || '') + '</textarea>' +
+        '<button onclick="executeFieldSubmit(' + t.task_id + ', true)" style="width:100%;background:#e65100;color:#ffffff;border:none;border-radius:6px;padding:10px;font-weight:600;font-size:13px;cursor:pointer">Re-Submit for Review</button>';
+    } else {
+      // Pending or In Progress
+      actionsHtml = '' +
+        '<div style="font-size:11px;font-weight:600;color:#8b949e;margin-bottom:6px">Submission Notes</div>' +
+        '<textarea id="ft-member-submit-notes" placeholder="Enter completion notes and observations..." style="width:100%;min-height:65px;background:#080c13;border:1px solid #1c2636;border-radius:6px;color:#c9d1d9;padding:8px 10px;font-size:12px;margin-bottom:12px;resize:vertical;outline:none;box-sizing:border-box"></textarea>' +
+        '<button onclick="executeFieldSubmit(' + t.task_id + ', false)" style="width:100%;background:#2ea043;color:#ffffff;border:none;border-radius:6px;padding:10px;font-weight:600;font-size:13px;cursor:pointer">Submit for Review</button>';
+    }
+  }
+
+  p.innerHTML = '' +
+    '<div id="ft-rv-code-region" style="font-family:Consolas,monospace;font-size:11px;color:#8b949e;margin-bottom:6px">' + esc(t.task_code) + ' | ' + esc(t.region) + '</div>' +
+    '<h3 id="ft-rv-title" style="margin:0 0 6px;font-size:16px;font-weight:700;color:#ffffff;line-height:1.35">' + esc(t.title) + '</h3>' +
+    '<div id="ft-rv-status" style="font-size:12.5px;font-weight:600;color:' + statusColor + ';margin-bottom:18px">' + statusText + '</div>' +
+    '<div style="font-size:11px;font-weight:600;color:#8b949e;margin-bottom:4px">Submission note</div>' +
+    '<div id="ft-rv-notes" style="font-size:13px;color:#c9d1d9;line-height:1.45;margin-bottom:16px">' + submissionNotes + '</div>' +
+    '<div style="font-size:11px;font-weight:600;color:#8b949e;margin-bottom:4px">Attachment</div>' +
+    '<a id="ft-rv-attachment" href="/' + attachmentFile + '" download style="font-size:12.5px;color:#58a6ff;text-decoration:none;cursor:pointer;display:inline-block;margin-bottom:18px">' + attachmentFile + '</a>' +
+    actionsHtml +
+    '<div style="font-size:11px;color:#8b949e;margin-top:20px;text-align:center">Full description opens on request.</div>';
+};
+
+window.executeFieldReview = function(taskId, decision) {
+  var feedback = $('ft-admin-feedback') ? $('ft-admin-feedback').value.trim() : '';
+  var apiUrl = (window.location.port === '5000') ? '' : 'http://localhost:5000';
+  fetch('/api/tasks/review', { method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      task_id: taskId,
+      decision: decision,
+      boss_feedback: feedback || (decision === 'Accepted' ? 'Approved by Administration' : 'Revision required')
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res.status === 'reviewed') {
+      fetchTasksData();
+    } else {
+      alert("Review failed: " + (res.error || 'Server error'));
+    }
+  })
+  .catch(function(err) {
+    alert("Network error: " + err.message);
+  });
+};
+
+window.executeFieldSubmit = function(taskId, isResubmit) {
+  var notesInput = isResubmit ? $('ft-member-resubmit-notes') : $('ft-member-submit-notes');
+  var notes = notesInput ? notesInput.value.trim() : '';
+  if (!notes) {
+    alert("Please enter submission notes before submitting.");
+    return;
+  }
+
+  var apiUrl = (window.location.port === '5000') ? '' : 'http://localhost:5000';
+  fetch('/api/tasks/update-status', { method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      task_id: taskId,
+      status: 'Submitted for Review',
+      submission_notes: notes,
+      report_filename: 'audit_report_olt5.csv'
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res.status === 'updated') {
+      fetchTasksData();
+    } else {
+      alert("Submission error: " + (res.error || 'Server error'));
+    }
+  })
+  .catch(function(err) {
+    alert("Network error: " + err.message);
+  });
+};
+
+/* =========================================================================
+   DEDICATED FULL-PAGE TEAM MEMBER MY TASKS CONTROLLER (FOR ALL 48 MEMBERS)
+   ========================================================================= */
+var selectedMemberTaskId = null;
+var currentMemberTab = 'todo';
+var selectedAttachedFileName = '';
+
+window.openMemberTasksView = function(taskId) {
+  var v = $('member-tasks-view');
+  if (!v) return;
+  v.classList.add('active');
+
+  // Display active member's name and region dynamically for all 48 members
+  if ($('mt-user-badge')) {
+    var reg = activeUser.region || (activeUser.name && activeUser.name.includes('(') ? activeUser.name.split('(')[1].replace(')', '') : 'Field');
+    var cleanName = activeUser.name ? activeUser.name.split(' (')[0] : 'Team Member';
+    $('mt-user-badge').textContent = cleanName + ' | ' + reg;
+  }
+
+  if (taskId) {
+    selectedMemberTaskId = taskId;
+  }
+
+  renderMemberTasksView();
+};
+
+window.closeMemberTasksView = function() {
+  var v = $('member-tasks-view');
+  if (v) v.classList.remove('active');
+  if (map) setTimeout(function() { map.invalidateSize(); }, 150);
+};
+
+window.switchMemberTaskTab = function(tabKey) {
+  currentMemberTab = tabKey;
+  ['todo', 'progress', 'submitted', 'completed', 'overdue'].forEach(function(k) {
+    var b = $('tab-btn-mt-' + k);
+    if (b) b.classList.toggle('active', k === tabKey);
+  });
+  renderMemberTasksView();
+};
+
+window.onMemberFileSelected = function(input) {
+  if (input.files && input.files[0]) {
+    selectedAttachedFileName = input.files[0].name;
+    var lbl = $('mt-dropzone-label');
+    if (lbl) lbl.innerHTML = '&#10003; Attached: <b style="color:#58a6ff">' + esc(selectedAttachedFileName) + '</b>';
+  }
+};
+
+window.renderMemberTasksView = function() {
+  var container = $('mt-cards-list');
+  if (!container) return;
+
+  // Filter tasks assigned ONLY to the active team member — no region fallback
+  var myTasks = allTasks.filter(function(t) {
+    return (t.assigned_to === activeUser.email);
+  });
+
+  // Calculate counts for pills
+  var todoTasks = myTasks.filter(function(t) { return t.status === 'Pending' || t.status === 'Rejected'; });
+  var progressTasks = myTasks.filter(function(t) { return t.status === 'In Progress'; });
+  var submittedTasks = myTasks.filter(function(t) { return t.status === 'Submitted for Review'; });
+  var completedTasks = myTasks.filter(function(t) { return t.status === 'Accepted'; });
+
+  // Overdue count
+  var now = new Date();
+  var overdueTasks = myTasks.filter(function(t) {
+    if (t.status === 'Accepted') return false;
+    if (t.deadline) {
+      var d = new Date(t.deadline);
+      return d < now;
+    }
+    return false;
+  });
+
+  if ($('mt-count-todo')) $('mt-count-todo').textContent = '[' + todoTasks.length + ']';
+  if ($('mt-count-progress')) $('mt-count-progress').textContent = '[' + progressTasks.length + ']';
+  if ($('mt-count-overdue')) $('mt-count-overdue').textContent = '[' + overdueTasks.length + ']';
+
+  // Determine tasks to show in current tab
+  var tabTasks = [];
+  if (currentMemberTab === 'todo') tabTasks = todoTasks;
+  else if (currentMemberTab === 'progress') tabTasks = progressTasks;
+  else if (currentMemberTab === 'submitted') tabTasks = submittedTasks;
+  else if (currentMemberTab === 'completed') tabTasks = completedTasks;
+  else if (currentMemberTab === 'overdue') tabTasks = overdueTasks;
+  else tabTasks = myTasks;
+
+  if (tabTasks.length === 0) {
+    container.innerHTML = 
+      '<div style="text-align:center;padding:20px;color:#8b949e;font-size:12px">No tasks in this section.</div>' +
+      '<div class="mt-tc-placeholder"><div class="ph-code">[TASK CODE]</div><div class="ph-title">[TASK TITLE]</div><div class="ph-meta">[AREA] | [DEADLINE]</div></div>' +
+      '<div class="mt-tc-placeholder"><div class="ph-code">[TASK CODE]</div><div class="ph-title">[TASK TITLE]</div><div class="ph-meta">[AREA] | [DEADLINE]</div></div>';
+    
+    if (myTasks.length > 0) {
+      renderMemberTaskDetail(myTasks[0]);
+    } else {
+      var detailEl = $('mt-detail-panel');
+      if (detailEl) {
+        detailEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#8b949e;font-size:13px">You have no tasks assigned to you currently.</div>';
+      }
+    }
+    return;
+  }
+
+  // Find currently selected task
+  var selTask = tabTasks.find(function(t) { return t.task_id === selectedMemberTaskId; });
+  if (!selTask) {
+    selTask = tabTasks[0];
+    selectedMemberTaskId = selTask.task_id;
+  }
+
+  var html = '';
+  tabTasks.forEach(function(t) {
+    var isSel = (t.task_id === selectedMemberTaskId);
+    var pColor = (esc(t.priority) === 'Critical') ? '#f85149' : ((esc(t.priority) === 'High') ? '#d29922' : '#58a6ff');
+    var dueStr = 'Due in 2 days';
+    if (t.deadline_str) {
+      dueStr = 'Due ' + t.deadline_str.split(' ')[0];
+    } else if (esc(t.status) === 'Submitted for Review') {
+      dueStr = 'Submitted for Review';
+    } else if (esc(t.status) === 'Accepted') {
+      dueStr = 'Completed';
+    }
+
+    html += '<div class="mt-task-card ' + (isSel ? 'selected' : '') + '" onclick="selectMemberTask(' + t.task_id + ')">' +
+      '<div class="mt-tc-head">' +
+        '<span class="mt-tc-code">' + esc(t.task_code) + '</span>' +
+        '<span class="mt-tc-priority" style="color:' + pColor + '">' + esc(t.priority) + '</span>' +
+      '</div>' +
+      '<div class="mt-tc-title">' + esc(t.title) + '</div>' +
+      '<div class="mt-tc-meta">' + (esc(t.area_name) || 'North Area') + ' | ' + dueStr + '</div>' +
+    '</div>';
+  });
+
+  // If only 1 task in tab, render the 2 placeholder wireframes below to match screenshot exactly
+  if (tabTasks.length === 1) {
+    html += '<div class="mt-tc-placeholder"><div class="ph-code">[TASK CODE]</div><div class="ph-title">[TASK TITLE]</div><div class="ph-meta">[AREA] | [DEADLINE]</div></div>' +
+            '<div class="mt-tc-placeholder"><div class="ph-code">[TASK CODE]</div><div class="ph-title">[TASK TITLE]</div><div class="ph-meta">[AREA] | [DEADLINE]</div></div>';
+  }
+
+  container.innerHTML = html;
+  renderMemberTaskDetail(selTask);
+};
+
+window.selectMemberTask = function(taskId) {
+  var curInput = $('mt-sub-notes');
+  if (curInput && selectedMemberTaskId) {
+    window.memberDrafts = window.memberDrafts || {};
+    window.memberDrafts[selectedMemberTaskId] = curInput.value;
+  }
+  selectedMemberTaskId = taskId;
+  renderMemberTasksView();
+};
+
+window.renderMemberTaskDetail = function(t) {
+  var p = $('mt-detail-panel');
+  if (!p || !t) return;
+
+  var statusColor = '#8b949e';
+  if (t.status === 'In Progress') statusColor = '#58a6ff';
+  else if (t.status === 'Submitted for Review') statusColor = '#d29922';
+  else if (t.status === 'Accepted') statusColor = '#2ea043';
+  else if (t.status === 'Rejected') statusColor = '#f85149';
+
+  var pColor = (t.priority === 'Critical') ? '#f85149' : ((t.priority === 'High') ? '#d29922' : '#58a6ff');
+
+  var instructions = t.description || 'Survey streets 3 to 7 for the new 48-core feeder route. Mark pole positions and possible underground duct routes.';
+  var deadlineVal = t.deadline_str || (t.deadline ? t.deadline.toString().slice(0, 16) : '[DATE, TIME]');
+  var locationVal = t.area_name || 'Eden Valley Block B';
+  var assignedByVal = t.assigned_by_name || 'Engr. Tariq Mehmood';
+
+  // Action section
+  var actionAreaHtml = '';
+  if (t.status === 'Pending') {
+    actionAreaHtml = '' +
+      '<div class="mt-actions-row">' +
+        '<button class="mt-btn-start" onclick="memberStartTask(' + t.task_id + ')">Start task</button>' +
+        '<button class="mt-btn-submit" onclick="memberSubmitTask(' + t.task_id + ')">Submit for review</button>' +
+      '</div>';
+  } else if (t.status === 'In Progress') {
+    actionAreaHtml = '' +
+      '<div class="mt-actions-row">' +
+        '<button class="mt-btn-start" style="background:#0969da;opacity:0.85" disabled>In Progress</button>' +
+        '<button class="mt-btn-submit" style="background:#2ea043;border-color:#2ea043" onclick="memberSubmitTask(' + t.task_id + ')">Submit for review</button>' +
+      '</div>';
+  } else if (t.status === 'Submitted for Review') {
+    actionAreaHtml = '<div style="background:rgba(210,153,34,0.12);border:1px solid rgba(210,153,34,0.3);color:#d29922;padding:12px;border-radius:6px;text-align:center;font-size:13px;font-weight:600">Work submitted. Awaiting Administrator review.</div>';
+  } else if (t.status === 'Rejected') {
+    actionAreaHtml = '' +
+      '<div style="background:rgba(218,54,51,0.15);border:1px solid rgba(218,54,51,0.3);color:#f85149;padding:12px;border-radius:6px;font-size:12px;margin-bottom:14px"><b>Admin Rejection Feedback:</b> ' + (t.boss_feedback || 'Revision needed.') + '</div>' +
+      '<div class="mt-actions-row">' +
+        '<button class="mt-btn-start" onclick="memberStartTask(' + t.task_id + ')">Resume Work</button>' +
+        '<button class="mt-btn-submit" style="background:#e65100;border-color:#e65100" onclick="memberSubmitTask(' + t.task_id + ')">Re-Submit for review</button>' +
+      '</div>';
+  } else if (t.status === 'Accepted') {
+    actionAreaHtml = '<div style="background:rgba(46,160,67,0.12);border:1px solid rgba(46,160,67,0.3);color:#3fb950;padding:12px;border-radius:6px;text-align:center;font-size:13px;font-weight:600">Congratulations! Task has been accepted by Administration.</div>';
+  }
+
+  // Preserve user typed text even across background auto-refresh
+  var existingText = (window.memberDrafts && window.memberDrafts[t.task_id] !== undefined)
+    ? window.memberDrafts[t.task_id]
+    : ($('mt-sub-notes') && selectedMemberTaskId === t.task_id && $('mt-sub-notes').value ? $('mt-sub-notes').value : (t.submission_notes || ''));
+
+  p.innerHTML = '' +
+    '<div class="mt-detail-top">' +
+      '<div style="font-family:Consolas,monospace;font-size:11px;color:#8b949e">' +
+        esc(t.task_code) + ' &nbsp;|&nbsp; ' + esc(t.task_type) + ' &nbsp;|&nbsp; ' + esc(t.region) +
+      '</div>' +
+      '<div style="font-size:12.5px;color:#8b949e;display:flex;align-items:center;gap:6px">' +
+        '<span style="color:' + statusColor + '">&#8226;</span> ' + esc(t.status) +
+      '</div>' +
+    '</div>' +
+    '<h2 class="mt-det-title">' + esc(t.title) + '</h2>' +
+    '<div class="mt-meta-grid">' +
+      '<div>' +
+        '<div class="mt-meta-lbl">Deadline</div>' +
+        '<div class="mt-meta-val">' + deadlineVal + '</div>' +
+      '</div>' +
+      '<div>' +
+        '<div class="mt-meta-lbl">Priority</div>' +
+        '<div class="mt-meta-val" style="color:' + pColor + '">' + esc(t.priority) + '</div>' +
+      '</div>' +
+      '<div>' +
+        '<div class="mt-meta-lbl">Assigned by</div>' +
+        '<div class="mt-meta-val">' + assignedByVal + '</div>' +
+      '</div>' +
+      '<div>' +
+        '<div class="mt-meta-lbl">Location</div>' +
+        '<div class="mt-meta-val">' + locationVal + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="mt-section">' +
+      '<div class="mt-section-lbl">Instructions</div>' +
+      '<div class="mt-instructions-text">' + instructions + '</div>' +
+      (t.lat && t.lng ? '<button class="mt-btn-view-map" onclick="viewCurrentMemberTaskOnMap(' + t.task_id + ')">View on map</button>' : '') +
+    '</div>' +
+    '<div class="mt-section" id="mt-submission-section">' +
+      '<div class="mt-section-lbl">Your submission</div>' +
+      '<textarea id="mt-sub-notes" placeholder="Work notes and findings" class="mt-textarea" oninput="window.memberDrafts=window.memberDrafts||{};window.memberDrafts[' + t.task_id + ']=this.value">' + existingText + '</textarea>' +
+      '<div class="mt-dropzone" id="mt-dropzone" onclick="document.getElementById(\'mt-file-input\').click()">' +
+        '<input type="file" id="mt-file-input" style="display:none" onchange="onMemberFileSelected(this)">' +
+        '<span id="mt-dropzone-label">' + (selectedAttachedFileName ? '&#10003; Attached: ' + selectedAttachedFileName : (esc(t.report_filename) ? '&#10003; Attached: ' + esc(t.report_filename) : 'Attach report (PDF, XLSX, CSV, GeoJSON)')) + '</span>' +
+      '</div>' +
+      actionAreaHtml +
+      '<div class="mt-feedback-footer">' + (esc(t.boss_feedback) ? 'Admin Feedback: ' + esc(t.boss_feedback) : 'Administrator feedback will appear here after review.') + '</div>' +
+    '</div>';
+};
+
+window.memberStartTask = function(taskId) {
+  var apiUrl = (window.location.port === '5000') ? '' : 'http://localhost:5000';
+  fetch('/api/tasks/update-status', { method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      task_id: taskId,
+      status: 'In Progress'
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res.status === 'updated') {
+      fetchTasksData();
+    } else {
+      alert("Error starting task: " + (res.error || 'Server error'));
+    }
+  })
+  .catch(function(err) { alert("Network error: " + err.message); });
+};
+
+window.memberSubmitTask = function(taskId) {
+  var notesInput = $('mt-sub-notes');
+  var notes = (notesInput ? notesInput.value.trim() : '') || (window.memberDrafts && window.memberDrafts[taskId] ? window.memberDrafts[taskId].trim() : '');
+  if (!notes) {
+    alert("Please write work notes and findings before submitting.");
+    return;
+  }
+
+  var apiUrl = (window.location.port === '5000') ? '' : 'http://localhost:5000';
+  fetch('/api/tasks/update-status', { method: 'POST', credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      task_id: taskId,
+      status: 'Submitted for Review',
+      submission_notes: notes,
+      report_filename: selectedAttachedFileName || 'field_survey_report.csv'
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(res) {
+    if (res.status === 'updated') {
+      if (window.memberDrafts) delete window.memberDrafts[taskId];
+      selectedAttachedFileName = '';
+      fetchTasksData();
+      alert("Task report successfully submitted for review!");
+    } else {
+      alert("Submission error: " + (res.error || 'Server error'));
+    }
+  })
+  .catch(function(err) { alert("Network error: " + err.message); });
+};
+
+window.viewCurrentMemberTaskOnMap = function(taskId) {
+  var t = allTasks.find(function(x) { return x.task_id === taskId; });
+  if (t && t.lat && t.lng) {
+    closeMemberTasksView();
+    if (map) {
+      map.flyTo([t.lat, t.lng], 17, { duration: 1.2 });
+      setTimeout(function() {
+        if (typeof zoomToTask === 'function') zoomToTask(t.lat, t.lng, t.task_code);
+      }, 1250);
+    }
+  }
+};
+
+// Drawer Tabs switching
+document.querySelectorAll('.dd-tab').forEach(function(tab) {
+  tab.onclick = function() {
+    var target = this.getAttribute('data-tab');
+    openDispatchDrawerTab(target);
+  };
+});
+
+// Filter change listeners
+['filt-task-region', 'filt-task-type', 'filt-task-status'].forEach(function(id) {
+  if ($(id)) $(id).onchange = renderTasksList;
+});
+
+// Boss: Open Assign Task Modal
+if ($('btn-open-assign-modal')) {
+  $('btn-open-assign-modal').onclick = function() {
+    populateAssigneeDropdown();
+
+    // Set default deadline to 2 days from now
+    var d = new Date();
+    d.setDate(d.getDate() + 2);
+    var dStr = d.toISOString().slice(0, 16);
+    if ($('task-input-deadline')) $('task-input-deadline').value = dStr;
+
+    // Set map center coordinates as default
+    if (map && $('task-input-lat') && $('task-input-lng')) {
+      var c = map.getCenter();
+      $('task-input-lat').value = c.lat.toFixed(6);
+      $('task-input-lng').value = c.lng.toFixed(6);
+    }
+
+    openModal('modal-assign-task');
+  };
+}
+
+// Helper: Use current map center
+if ($('btn-use-map-center')) {
+  $('btn-use-map-center').onclick = function() {
+    if (!map) return;
+    var c = map.getCenter();
+    if ($('task-input-lat')) $('task-input-lat').value = c.lat.toFixed(6);
+    if ($('task-input-lng')) $('task-input-lng').value = c.lng.toFixed(6);
+  };
+}
+
+// Boss: Submit New Task Creation
+if ($('btn-submit-create-task')) {
+  $('btn-submit-create-task').onclick = function() {
+    var title = $('task-input-title') ? $('task-input-title').value.trim() : '';
+    var taskType = $('task-input-type') ? $('task-input-type').value : 'Survey Task';
+    var region = $('task-input-region') ? $('task-input-region').value : 'North';
+    var assignee = $('task-input-assignee') ? $('task-input-assignee').value : '';
+    var area = $('task-input-area') ? $('task-input-area').value.trim() : '';
+    var priority = $('task-input-priority') ? $('task-input-priority').value : 'High';
+    var lat = $('task-input-lat') && $('task-input-lat').value ? parseFloat($('task-input-lat').value) : null;
+    var lng = $('task-input-lng') && $('task-input-lng').value ? parseFloat($('task-input-lng').value) : null;
+    var deadline = $('task-input-deadline') ? $('task-input-deadline').value : '';
+    var desc = $('task-input-desc') ? $('task-input-desc').value.trim() : '';
+
+    if (!title || !assignee || !deadline) {
+      alert('Please fill in Title, Assignee, and Deadline.');
+      return;
+    }
+
+    var apiUrl = (window.location.port === '5000') ? '' : 'http://localhost:5000';
+    fetch('/api/tasks/create', { method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: title,
+        task_type: taskType,
+        region: region,
+        assigned_to: assignee,
+        area_name: area,
+        priority: priority,
+        latitude: lat,
+        longitude: lng,
+        deadline: deadline,
+        description: desc,
+        assigned_by: activeUser.email
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      closeModal('modal-assign-task');
+      fetchTasksData();
+      alert('Task successfully dispatched to ' + assignee);
+    })
+    .catch(function(e) { alert('Error creating task: ' + e); });
+  };
+}
+
+// Initial Fetch for Teams & Tasks
+fetchTeamsData();
+fetchTasksData();
+if (typeof window.updateMemberLoginList === 'function') window.updateMemberLoginList();
+setInterval(fetchTasksData, 10000);
+</script>
+</body>
+</html>
